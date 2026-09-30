@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ماموریت جمع‌آوری قطعات</title>
-<meta name="theme-color" content="#0E2A47">
+<meta name="theme-color" content="#eef4fa">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -19,27 +19,27 @@
     window.__FIELD_TOKEN = (s.rcv && s.rcv.token) || 'offline';
   })();
 </script>
-<style>.homelink{position:fixed;top:8px;left:8px;z-index:40;background:#0E2A47;color:#fff;text-decoration:none;border-radius:99px;padding:4px 12px;font:12px Tahoma,Arial,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.2)}</style>
+<style>.homelink{position:fixed;top:8px;left:8px;z-index:40;background:#4f7ca8;color:#fff;text-decoration:none;border-radius:99px;padding:4px 12px;font:12px Tahoma,Arial,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.2)}</style>
 <style>
   /* ظاهر نزدیک به فرم‌های پروژه‌ی ارسال */
   *{box-sizing:border-box}
-  body{margin:0;background:#eef3f8;color:#1c2530;font:13px/1.8 Tahoma,Arial,sans-serif}
+  body{margin:0;background:#f4f7fb;color:#1c2530;font:13px/1.8 Tahoma,Arial,sans-serif}
   .container{max-width:1000px;margin:14px auto 90px;background:#fff;border:1px solid #dde8f2;border-radius:12px;padding:18px}
-  h3{color:#0B4F8A;font-size:14.5px;margin:18px 0 8px;border-bottom:2px solid #e6eef6;padding-bottom:4px}
+  h3{color:#4f7ca8;font-size:14.5px;margin:18px 0 8px;border-bottom:2px solid #e6eef6;padding-bottom:4px}
   .note{color:#6b7785;font-size:12px;margin:4px 0}
   .form-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px}
   .form-group{flex:1;min-width:180px}
   .form-group label{display:block;font-weight:bold;margin-bottom:3px}
   input[type=text],input[type=number],select,textarea{width:100%;padding:7px 9px;border:1px solid #c9d6e3;border-radius:7px;font:inherit;background:#fff}
   input:disabled,select:disabled,textarea:disabled{background:#f3f5f8;color:#6b7785}
-  button{background:#0B4F8A;color:#fff;border:0;border-radius:7px;padding:7px 14px;font:inherit;cursor:pointer}
+  button{background:#4f7ca8;color:#fff;border:0;border-radius:7px;padding:7px 14px;font:inherit;cursor:pointer}
   button:disabled{background:#9fb3c8;cursor:default}
-  button.done{background:#17694a}
+  button.done{background:#3f8f6b}
   .code{direction:ltr;unicode-bidi:isolate;font-family:Consolas,monospace}
 
   /* سربرگ — مطابق فرم اعلام قطعات مورد نیاز */
-  table.head{width:100%;border-collapse:collapse;border:1px solid #000;margin-bottom:10px}
-  table.head td{border:1px solid #000;padding:4px 8px;font-size:13px}
+  table.head{width:100%;border-collapse:collapse;border:1px solid #c3cdd8;margin-bottom:10px}
+  table.head td{border:1px solid #c3cdd8;padding:4px 8px;font-size:13px}
   table.head .lbl{font-weight:bold}
   table.head .title{text-align:center;font-size:16px;font-weight:bold;width:24%}
   table.head .logo{text-align:center;width:130px;font-weight:bold;font-size:11px;line-height:1.5}
@@ -47,65 +47,65 @@
 
   /* صف ماموریت‌ها */
   .queue-item{background:#f4f8fc;border:1px solid #dde8f2;border-radius:10px;padding:10px 14px;margin-bottom:8px;cursor:pointer}
-  .queue-item:hover{border-color:#0B4F8A}
-  .queue-item b{color:#0B4F8A}
+  .queue-item:hover{border-color:#4f7ca8}
+  .queue-item b{color:#4f7ca8}
   .info-box{background:#f4f8fc;border:1px solid #dde8f2;border-radius:8px;padding:8px 12px;margin-bottom:8px}
 
   /* زمان‌ها */
   .time-box{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .time-box .t{min-width:70px;font-weight:bold;direction:ltr;text-align:center;background:#f4f8fc;border:1px solid #dde8f2;border-radius:6px;padding:3px 8px}
   .gps{font-size:11.5px;color:#6b7785;display:block}
-  .gps.far{color:#b3261e;font-weight:bold}
+  .gps.far{color:#c0564b;font-weight:bold}
   .q{font-size:11px;border-radius:99px;padding:0 8px}
-  .q.wait{background:#fff3d4;color:#7a4f00} .q.sent{background:#e0f3ea;color:#17694a}
+  .q.wait{background:#fff3d4;color:#7a4f00} .q.sent{background:#e0f3ea;color:#3f8f6b}
 
   /* جستجو و جدول جمع‌آوری */
   .search-row{display:flex;gap:8px;position:sticky;top:0;background:#fff;padding:8px 0;z-index:5}
-  .search-row input{font-size:15px;padding:9px 11px;border:2px solid #0B4F8A}
-  .search-row label.qr{background:#fff;border:2px solid #0B4F8A;border-radius:7px;padding:0 12px;font-size:20px;display:flex;align-items:center;cursor:pointer;position:relative}
+  .search-row input{font-size:15px;padding:9px 11px;border:2px solid #4f7ca8}
+  .search-row label.qr{background:#fff;border:2px solid #4f7ca8;border-radius:7px;padding:0 12px;font-size:20px;display:flex;align-items:center;cursor:pointer;position:relative}
   .search-row label.qr input{position:absolute;opacity:0;width:1px;height:1px}
   .entry{background:#f4f8fc;border:1px solid #dde8f2;border-radius:10px;padding:10px 12px}
-  .entry label.qr{background:#fff;border:2px solid #0B4F8A;border-radius:7px;padding:0 12px;font-size:20px;display:flex;align-items:center;cursor:pointer;position:relative}
+  .entry label.qr{background:#fff;border:2px solid #4f7ca8;border-radius:7px;padding:0 12px;font-size:20px;display:flex;align-items:center;cursor:pointer;position:relative}
   .entry label.qr input{position:absolute;opacity:0;width:1px;height:1px}
   .search-hits{position:absolute;left:0;right:0;z-index:6;background:#fff;box-shadow:0 6px 18px rgba(0,0,0,.15);border-radius:6px}
   .search-hits:empty{display:none}
   table.grid button.sm{padding:2px 8px;font-size:11.5px;margin:1px}
-  table.grid button.del{background:#b3261e}
+  table.grid button.del{background:#c0564b}
   .search-hits div{padding:6px 10px;border:1px solid #dde8f2;border-radius:6px;margin-bottom:4px;cursor:pointer;background:#f9fbfd}
-  .search-hits div:hover{border-color:#0B4F8A}
+  .search-hits div:hover{border-color:#4f7ca8}
   mark{background:#ffe58a;color:inherit}
-  .tbl{overflow-x:auto;border:1px solid #000}
+  .tbl{overflow-x:auto;border:1px solid #c3cdd8}
   table.grid{width:100%;border-collapse:collapse;min-width:860px}
-  table.grid th,table.grid td{border:1px solid #000;padding:3px 5px;text-align:center;font-size:12.5px}
+  table.grid th,table.grid td{border:1px solid #c3cdd8;padding:3px 5px;text-align:center;font-size:12.5px}
   table.grid th{background:#e6ebf2}
   table.grid td.desc{text-align:right}
   table.grid input{width:64px;text-align:center;padding:4px;direction:ltr}
   table.grid input.nt{width:120px;text-align:right;direction:rtl}
   table.grid tr.sub td{font-weight:bold;background:#f5f9fd}
   table.grid tr.hit td{background:#fff6b0 !important}
-  table.grid tr.ok td.ctl{color:#17694a;font-size:16px}
+  table.grid tr.ok td.ctl{color:#3f8f6b;font-size:16px}
   table.grid td.rem{direction:ltr;unicode-bidi:plaintext}
-  table.grid td.rem.pos{color:#b3261e;font-weight:bold}
+  table.grid td.rem.pos{color:#c0564b;font-weight:bold}
   table.grid td.rem.neg{color:#7a4f00;font-weight:bold}
-  table.grid input.err{border-color:#b3261e;background:#fbe9e7}
+  table.grid input.err{border-color:#c0564b;background:#fbe9e7}
 
   .msg{padding:8px 12px;border-radius:8px;margin:8px 0}
-  .msg.bad{background:#fbe9e7;color:#b3261e} .msg.ok{background:#e0f3ea;color:#17694a} .msg.warn{background:#fff3d4;color:#7a4f00}
+  .msg.bad{background:#fbe9e7;color:#c0564b} .msg.ok{background:#e0f3ea;color:#3f8f6b} .msg.warn{background:#fff3d4;color:#7a4f00}
   .chk{display:flex;gap:8px;align-items:flex-start;font-weight:bold;margin-top:8px}
   .chk input{width:20px;height:20px}
   .signature-section{display:flex;gap:10px;margin-top:10px}
-  .signature-box{flex:1;border:1px solid #000;height:70px;padding:4px 8px;font-weight:bold}
+  .signature-box{flex:1;border:1px solid #c3cdd8;height:70px;padding:4px 8px;font-weight:bold}
   .button-section{display:flex;gap:10px;margin-top:14px}
   .button-section button{flex:1;padding:11px;font-size:14px}
-  .sync-bar{position:fixed;bottom:0;left:0;right:0;background:#0B4F8A;color:#fff;padding:6px 14px;font-size:12px;display:flex;gap:10px;align-items:center;justify-content:space-between;z-index:20}
+  .sync-bar{position:fixed;bottom:0;left:0;right:0;background:#4f7ca8;color:#fff;padding:6px 14px;font-size:12px;display:flex;gap:10px;align-items:center;justify-content:space-between;z-index:20}
   .sync-bar button{background:rgba(255,255,255,.18);padding:3px 10px;font-size:11.5px}
   .toast{position:fixed;bottom:44px;left:12px;right:12px;max-width:600px;margin:0 auto;padding:10px 14px;border-radius:8px;font-weight:bold;z-index:30;color:#fff}
-  .toast.ok{background:#17694a} .toast.bad{background:#b3261e} .toast.warn{background:#c7811d}
+  .toast.ok{background:#3f8f6b} .toast.bad{background:#c0564b} .toast.warn{background:#c7811d}
   .hidden{display:none !important}
   /* لیست برداشت (بدون تعداد) */
   .pick-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
   .pick-bar{height:8px;background:#e6ebf2;border-radius:99px;overflow:hidden;flex:1;min-width:120px}
-  .pick-bar i{display:block;height:100%;background:#17694a}
+  .pick-bar i{display:block;height:100%;background:#3f8f6b}
   table.grid.pick{min-width:0}
   table.grid.pick td.desc{min-width:0}
   table.pick tr.done td{background:#eef8f2;color:#5b6b63}
@@ -120,7 +120,7 @@
 
 <div class="container hidden" id="app">
   <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-    <b style="color:#0B4F8A;font-size:15px">ماموریت جمع‌آوری قطعات</b><span class="note" id="who"></span>
+    <b style="color:#4f7ca8;font-size:15px">ماموریت جمع‌آوری قطعات</b><span class="note" id="who"></span>
   </div>
 
   <!-- ۱) ماموریت‌های من -->
@@ -142,7 +142,7 @@
         <td><span class="lbl">شماره:</span> <b class="code" id="hDocNo"></b></td>
         <td rowspan="4" class="title">فرم اعلام قطعات مورد نیاز<br><span style="font-size:12px;font-weight:normal">(ماموریت جمع‌آوری)</span></td>
         <td><span class="lbl">تاریخ آزاد سازی:</span> <span id="hRelDate"></span></td>
-        <td rowspan="4" class="logo"><img src="https://i.imgur.com/j0SW3Gu.png" onerror="this.style.display='none'" alt="">شرکت قوای محرکه کرمان خودرو<br>K.P.T.Co.</td>
+        <td rowspan="4" class="logo"><img src="logo.png" onerror="this.style.display='none'" alt="">شرکت قوای محرکه کرمان خودرو<br>K.P.T.Co.</td>
       </tr>
       <tr><td><span class="lbl">تاریخ:</span> <span id="hDate"></span></td><td><span class="lbl">ساعت آزاد سازی:</span> <span id="hRelTime"></span></td></tr>
       <tr><td><span class="lbl">نام محصول:</span> <span id="hProduct"></span></td><td><span class="lbl">نام انبار:</span> <span id="hWhName"></span></td></tr>
@@ -634,7 +634,7 @@ function renderGrid() {
     var x = s.rows[r.no], c = counted(r.no), rem = r3(r.total - c);
     seq++; sub = r3(sub + c); subExp = r3(subExp + r.total);
     html += '<tr' + (editNo === r.no ? ' class="hit"' : '') + '><td>' + seq + '</td>' +
-      '<td class="ctl">' + (rev ? (rem === 0 ? '✔' : '<span style="color:#b3261e">✖</span>') : '') + '</td>' +
+      '<td class="ctl">' + (rev ? (rem === 0 ? '✔' : '<span style="color:#c0564b">✖</span>') : '') + '</td>' +
       '<td class="code">' + esc(r.pn) + '</td><td class="code">' + (esc(r.cs) || '—') + '</td><td class="code">' + (esc(r.bx) || '—') + '</td>' +
       '<td class="desc">' + esc(r.desc) + '</td><td>' + (MAN() ? '—' : x.pk) + '</td><td>' + (MAN() ? '—' : x.per) + '</td><td><b>' + c + '</b>' + (MAN() ? ' ' + esc(r.unit) : '') + '</td>' +
       '<td class="rem ' + (rev ? (rem > 0 ? 'pos' : rem < 0 ? 'neg' : '') : '') + '">' + (rev ? rem : '') + '</td>' +
@@ -668,7 +668,7 @@ var entryMethod = 'manual';
 function pickPart(pn, method) {
   var g = uniqueParts().filter(function (x) { return x.pn === pn; })[0]; if (!g) return;
   cur = g; entryMethod = method || 'manual'; $('ePart').value = g.pn; $('hits').innerHTML = '';
-  $('eDesc').innerHTML = '<span style="color:#17694a;font-weight:bold">✔ در لیست هست:</span> ' + esc(g.desc);
+  $('eDesc').innerHTML = '<span style="color:#3f8f6b;font-weight:bold">✔ در لیست هست:</span> ' + esc(g.desc);
   var s = MS();
   $('eBox').innerHTML = (g.rows.length > 1 ? '<option value="">انتخاب کنید</option>' : '') + g.rows.map(function (r) {
     return '<option value="' + r.no + '">' + (esc(boxLbl(r)) || 'بدون کیس') + (s.rows[r.no] && editNo !== r.no ? ' — قبلاً ثبت شده' : '') + '</option>';
@@ -821,7 +821,7 @@ function renderShort() {
       '<td><input type="number" step="any" inputmode="' + (MAN() ? 'decimal' : 'numeric') + '" data-c2="' + r.no + '" value="' + (x.c2 == null ? '' : x.c2) + '"' + dis + '></td>' +
       '<td>' + (need3 ? '<input type="number" step="any" inputmode="' + (MAN() ? 'decimal' : 'numeric') + '" data-c3="' + r.no + '" value="' + (x.c3 == null ? '' : x.c3) + '"' + dis + '>' : '—') + '</td>' +
       '<td><input type="number" step="any" min="0" inputmode="' + (MAN() ? 'decimal' : 'numeric') + '" data-sp="' + r.no + '" value="' + (x.sp ? x.sp : '') + '" placeholder="0"' + dis + '></td>' +
-      (function () { var rem = r3(r.total - finalOf(r)); return rem > 0 ? '<td class="rem pos">' + rem + '</td>' : '<td style="color:#17694a;font-weight:bold">✔ برطرف شد</td>'; })() +
+      (function () { var rem = r3(r.total - finalOf(r)); return rem > 0 ? '<td class="rem pos">' + rem + '</td>' : '<td style="color:#3f8f6b;font-weight:bold">✔ برطرف شد</td>'; })() +
       '<td>' + (finalOf(r) >= r.total ? '—' : '<select data-rs="' + r.no + '" style="min-width:150px"' + dis + '><option value="">انتخاب کنید</option>' +
       REASONS.map(function (t) { return '<option' + (x.reason === t ? ' selected' : '') + '>' + t + '</option>'; }).join('') + '</select>') + '</td></tr>';
   }).join('');
