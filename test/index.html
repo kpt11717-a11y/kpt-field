@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#eef4fa">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>KPT میدانی</title>
+<style>
+  :root{--ink:#34506e;--accent:#4f7ca8;--accent2:#6b93bb;--bg:#f4f7fb;--muted:#7a8795;--border:#e1e8f0;--soft:#eef4fa}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;background:var(--bg);color:#2b3845;font:14px/1.8 Tahoma,Arial,sans-serif}
+  .top{background:linear-gradient(180deg,#ffffff,#eef4fa);border-bottom:1px solid var(--border);padding:18px 16px 54px;text-align:center}
+  .top img{height:92px;display:block;margin:0 auto 2px}
+  .top h1{margin:0;font-size:17px;color:var(--ink)} .top .sub{color:var(--muted);font-size:12px}
+  .wrap{max-width:520px;margin:-38px auto 30px;padding:0 14px}
+  .panel{background:#fff;border:1px solid var(--border);border-radius:16px;box-shadow:0 6px 20px rgba(52,80,110,.07);padding:20px;margin-bottom:14px}
+  h2{margin:0 0 12px;font-size:15px;color:var(--ink);text-align:center}
+  label{display:block;font-weight:bold;margin:10px 0 4px;font-size:13px;color:var(--ink)}
+  input{width:100%;padding:11px 12px;border:1px solid #d3dde8;border-radius:10px;font:inherit;background:#fbfcfe}
+  input:focus{outline:none;border-color:var(--accent2);box-shadow:0 0 0 3px rgba(79,124,168,.12)}
+  button{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:12px 16px;font:inherit;font-weight:bold;cursor:pointer;width:100%;margin-top:14px}
+  button:disabled{background:#b3c4d6}
+  button.link{background:none;color:var(--muted);width:auto;margin:0;padding:4px 8px;font-weight:normal}
+  .err{display:none;background:#fcefed;color:#b0493f;border-radius:8px;padding:8px 12px;margin-top:12px;font-size:13px}
+  .hello{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+  .hello b{color:var(--ink)}
+  .tile{display:flex;align-items:center;gap:14px;border:1px solid var(--border);border-radius:14px;padding:16px;margin-top:12px;text-decoration:none;color:inherit;background:#fff}
+  .tile:active{background:var(--soft)}
+  .tile .ic{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;background:var(--soft)}
+  .tile b{color:var(--ink);font-size:15px;display:block} .tile span{color:var(--muted);font-size:12px}
+  .note{color:var(--muted);font-size:12px;text-align:center;margin-top:10px}
+  .net{display:inline-block;padding:0 10px;border-radius:99px;font-size:11.5px;font-weight:bold}
+  .net.on{background:#e6f4ee;color:#3f8f6b} .net.off{background:#fdf4e1;color:#9a6a17}
+  .warn{background:#fdf4e1;color:#8a6118;border-radius:8px;padding:8px 12px;margin-top:10px;font-size:12.5px}
+  .hidden{display:none !important}
+</style>
+<script src="config.js"></script>
+<script src="api.js"></script>
+</head>
+<body>
+<div class="top">
+  <img src="app-logo.png" alt="KPT Logistics">
+  <h1>KPT میدانی</h1>
+  <div class="sub">ماموریت‌های میدانی — حتی بدون اینترنت</div>
+</div>
+<div class="wrap">
+  <div class="panel hidden" id="loginPanel">
+    <h2>ورود</h2>
+    <label>کد کاربری</label>
+    <input type="text" id="userCode" autocomplete="username" inputmode="numeric">
+    <label>رمز عبور</label>
+    <input type="password" id="password" autocomplete="current-password">
+    <button type="button" id="loginBtn">ورود</button>
+    <div class="err" id="loginErr"></div>
+    <div class="note">ورود فقط بار اول اینترنت لازم دارد. بعد از آن، برنامه بدون اینترنت هم باز می‌شود.</div>
+  </div>
+
+  <div class="panel hidden" id="homePanel">
+    <div class="hello">
+      <div><b id="uName"></b> <span class="note" id="uJob"></span></div>
+      <span class="net" id="net"></span>
+    </div>
+    <div id="relogin" class="warn hidden">ورود شما روی گوشی دیگری انجام شده یا منقضی شده است. ثبت‌های روی گوشی محفوظ‌اند و ارسال می‌شوند؛ برای گرفتن ماموریت جدید، «خروج» را بزنید و دوباره وارد شوید.</div>
+    <div id="tiles"></div>
+    <button type="button" id="installBtn" class="hidden">📲 نصب برنامه روی گوشی</button>
+    <div class="note" id="iosHint" style="display:none">برای نصب در آیفون: دکمه‌ی اشتراک‌گذاری ⬆️ ← Add to Home Screen</div>
+    <div style="text-align:center;margin-top:12px"><button type="button" class="link" id="logoutBtn">خروج از حساب ⎋</button></div>
+  </div>
+  <div class="note" id="ver"></div>
+</div>
+
+<script>
+var CFG = window.KPT_CONFIG;
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function lat(v) { return String(v || '').replace(/[۰-۹]/g, function (d) { return d.charCodeAt(0) - 0x06F0; }).replace(/[٠-٩]/g, function (d) { return d.charCodeAt(0) - 0x0660; }); }
+$('ver').textContent = 'نسخه ' + CFG.version;
+if (CFG.storePrefix) { var tb = document.createElement('div'); tb.textContent = '⚠ نسخه‌ی آزمایشی — به سرور کپی وصل است'; tb.style.cssText = 'background:#c0392b;color:#fff;text-align:center;padding:6px;font:bold 13px Tahoma,Arial,sans-serif'; document.body.insertBefore(tb, document.body.firstChild); }
+
+function netUi() { var on = navigator.onLine; $('net').className = 'net ' + (on ? 'on' : 'off'); $('net').textContent = on ? 'آنلاین' : 'آفلاین'; }
+window.addEventListener('online', netUi); window.addEventListener('offline', netUi);
+
+function showLogin(msg) {
+  $('homePanel').classList.add('hidden'); $('loginPanel').classList.remove('hidden');
+  if (msg) { $('loginErr').textContent = msg; $('loginErr').style.display = 'block'; }
+}
+function showHome(s) {
+  $('loginPanel').classList.add('hidden'); $('homePanel').classList.remove('hidden');
+  $('uName').textContent = s.user.fullName; $('uJob').textContent = s.user.jobTitle ? '(' + s.user.jobTitle + ')' : '';
+  var tiles = [];
+  if (s.rcv) tiles.push('<a class="tile" href="rcv.html"><div class="ic">📦</div><div><b>ماموریت جمع‌آوری قطعات</b><span>تیم دریافت — شمارش در انبار مشتری</span></div></a>');
+  if (s.snd) tiles.push('<a class="tile" href="snd.html"><div class="ic">🚚</div><div><b>ماموریت رانندگان</b><span>تیم ارسال — اعزام، تخلیه، برگشت پالت</span></div></a>');
+  $('tiles').innerHTML = tiles.join('') || '<div class="warn">برای این کاربر ماموریتی تعریف نشده است.</div>';
+  $('relogin').classList.toggle('hidden', !s.stale);
+  netUi();
+}
+
+(function init() {
+  var s = KPT.session();
+  if (!s || !s.user) { showLogin(); return; }
+  showHome(s);
+  // اگر اینترنت بود، اعتبار ورود بی‌صدا بررسی می‌شود (بدون اینترنت چیزی عوض نمی‌شود)
+  if (s.rcv && navigator.onLine) {
+    KPT.call(CFG.rcvApi, 'authPing', [s.rcv.token]).then(function (r) {
+      s.rcv.access = r.access; KPT.saveSession(s); showHome(s);
+    }, function (e) {
+      if (String(e.message).indexOf('SESSION_INVALID') === 0) { s.stale = true; KPT.saveSession(s); showHome(s); }
+    });
+  }
+  if (s.snd && CFG.sndApi && navigator.onLine) {
+    KPT.call(CFG.sndApi, 'fieldSendPing', [], s.snd.token).then(function (r) {
+      s.snd.pages = r.pages; KPT.saveSession(s); sendHubUser_(s); showHome(s);
+    }, function (e) {
+      if (String(e.message).indexOf('SESSION_INVALID') === 0) { s.stale = true; KPT.saveSession(s); showHome(s); }
+    });
+  }
+})();
+
+$('password').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('loginBtn').click(); });
+$('loginBtn').addEventListener('click', function () {
+  var btn = this, code = lat($('userCode').value).trim(), pass = lat($('password').value).trim();
+  $('loginErr').style.display = 'none';
+  if (!navigator.onLine) { showLogin('برای ورود بار اول اینترنت لازم است.'); return; }
+  btn.disabled = true; btn.textContent = 'در حال ورود…';
+  // یک ورود برای هر دو تیم: هر سروری که این کاربر در آن دسترسی ماموریت دارد
+  var tries = [KPT.call(CFG.rcvApi, 'fieldLogin', [code, pass])];
+  if (CFG.sndApi) tries.push(KPT.call(CFG.sndApi, 'fieldSendLogin', [code, pass]));
+  Promise.all(tries.map(function (p) { return p.then(function (r) { return { ok: r }; }, function (e) { return { err: e.message }; }); })).then(function (res) {
+    btn.disabled = false; btn.textContent = 'ورود';
+    var r1 = res[0], r2 = res[1] || { err: '' };
+    if (!r1.ok && !r2.ok) {
+      var msgs = [r1.err, r2.err].filter(function (m) { return m && m.indexOf('دسترسی ندارید') === -1; });
+      showLogin(msgs[0] || 'این کاربر به هیچ فرم ماموریتی دسترسی ندارد.'); return;
+    }
+    var base = (r1.ok || r2.ok).user;
+    var s = { user: { userID: base.userID || '', userCode: base.userCode || code, fullName: base.fullName, jobTitle: base.jobTitle }, at: Date.now() };
+    if (r1.ok) {
+      s.rcv = { token: r1.ok.token, access: r1.ok.access };
+      try { localStorage.setItem('kpt_rcv_last_user', JSON.stringify({ userID: r1.ok.user.userID, fullName: r1.ok.user.fullName, jobTitle: r1.ok.user.jobTitle })); } catch (e) {}
+    }
+    if (r2.ok) s.snd = { token: r2.ok.token, pages: r2.ok.pages, driverID: r2.ok.user.driverID || '' };
+    KPT.saveSession(s); sendHubUser_(s);
+    $('password').value = '';
+    showHome(s);
+    // اگر ورود به یکی از دو سرور با خطای غیر از «دسترسی ندارید» ناموفق بود، نشان داده شود
+    var warn = [[r1, 'تیم دریافت'], [r2, 'تیم ارسال']].filter(function (x) { return !x[0].ok && x[0].err && x[0].err.indexOf('دسترسی ندارید') === -1; })
+      .map(function (x) { return 'اتصال به ' + x[1] + ' برقرار نشد: ' + x[0].err; });
+    if (warn.length) { $('relogin').textContent = warn.join(' — '); $('relogin').classList.remove('hidden'); }
+  });
+});
+// فرم رانندگان کاربر را از این کلید می‌شناسد (مثل وقتی از هاب باز می‌شود)
+function sendHubUser_(s) {
+  if (!s.snd) return;
+  try { localStorage.setItem('kpt_hub_user', JSON.stringify({ success: true, userCode: s.user.userCode, fullName: s.user.fullName, role: s.user.jobTitle, driverID: s.snd.driverID, pages: s.snd.pages })); } catch (e) {}
+}
+$('logoutBtn').addEventListener('click', function () {
+  var pend = 0;
+  try { Object.keys(localStorage).forEach(function (k) { if (k.indexOf('kpt_rcv_v1_') === 0) { var d = JSON.parse(localStorage.getItem(k)); pend += (d && d.queue || []).length; } }); } catch (e) {}
+  var mp = (CFG.storePrefix || '') + 'kpt_msn2_';
+  try { Object.keys(localStorage).forEach(function (k) { if (k.indexOf(mp) === 0) { var d = JSON.parse(localStorage.getItem(k)); Object.keys((d && d.local) || {}).forEach(function (id) { var l = d.local[id]; pend += Object.keys(l.pend.vals).length + Object.keys(l.pend.times).length; }); } }); } catch (e) {}
+  if (pend && !confirm(pend + ' ثبت هنوز به سرور نرسیده است. با خروج پاک نمی‌شوند و بعد از ورود دوباره ارسال می‌شوند. خارج می‌شوید؟')) return;
+  KPT.saveSession(null); showLogin();
+});
+
+// دکمه‌ی نصب (اندروید / کروم)
+var deferred = null;
+window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; $('installBtn').classList.remove('hidden'); });
+$('installBtn').addEventListener('click', function () { if (!deferred) return; deferred.prompt(); deferred.userChoice.then(function () { deferred = null; $('installBtn').classList.add('hidden'); }); });
+if (/iphone|ipad/i.test(navigator.userAgent) && !navigator.standalone) $('iosHint').style.display = 'block';
+</script>
+</body>
+</html>

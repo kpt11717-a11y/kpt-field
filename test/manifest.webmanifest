@@ -1,0 +1,33 @@
+{
+  "name": "KPT میدانی — آزمایشی",
+  "short_name": "KPT آزمایشی",
+  "description": "ماموریت‌های میدانی شرکت قوای محرکه کرمان خودرو — کار بدون اینترنت",
+  "lang": "fa",
+  "dir": "rtl",
+  "start_url": "index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fbf7ec",
+  "theme_color": "#fbf7ec",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "id": "test/"
+}
