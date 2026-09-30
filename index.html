@@ -79,6 +79,7 @@ function $(id) { return document.getElementById(id); }
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 function lat(v) { return String(v || '').replace(/[۰-۹]/g, function (d) { return d.charCodeAt(0) - 0x06F0; }).replace(/[٠-٩]/g, function (d) { return d.charCodeAt(0) - 0x0660; }); }
 $('ver').textContent = 'نسخه ' + CFG.version;
+if (CFG.storePrefix) { var tb = document.createElement('div'); tb.textContent = '⚠ نسخه‌ی آزمایشی — به سرور کپی وصل است'; tb.style.cssText = 'background:#c0392b;color:#fff;text-align:center;padding:6px;font:bold 13px Tahoma,Arial,sans-serif'; document.body.insertBefore(tb, document.body.firstChild); }
 
 function netUi() { var on = navigator.onLine; $('net').className = 'net ' + (on ? 'on' : 'off'); $('net').textContent = on ? 'آنلاین' : 'آفلاین'; }
 window.addEventListener('online', netUi); window.addEventListener('offline', netUi);
@@ -159,7 +160,8 @@ function sendHubUser_(s) {
 $('logoutBtn').addEventListener('click', function () {
   var pend = 0;
   try { Object.keys(localStorage).forEach(function (k) { if (k.indexOf('kpt_rcv_v1_') === 0) { var d = JSON.parse(localStorage.getItem(k)); pend += (d && d.queue || []).length; } }); } catch (e) {}
-  try { pend += JSON.parse(localStorage.getItem('kpt_mission_sync_queue') || '[]').length + (localStorage.getItem('kpt_mission_pending_draft') ? 1 : 0); } catch (e) {}
+  var mp = (CFG.storePrefix || '') + 'kpt_msn2_';
+  try { Object.keys(localStorage).forEach(function (k) { if (k.indexOf(mp) === 0) { var d = JSON.parse(localStorage.getItem(k)); Object.keys((d && d.local) || {}).forEach(function (id) { var l = d.local[id]; pend += Object.keys(l.pend.vals).length + Object.keys(l.pend.times).length; }); } }); } catch (e) {}
   if (pend && !confirm(pend + ' ثبت هنوز به سرور نرسیده است. با خروج پاک نمی‌شوند و بعد از ورود دوباره ارسال می‌شوند. خارج می‌شوید؟')) return;
   KPT.saveSession(null); showLogin();
 });

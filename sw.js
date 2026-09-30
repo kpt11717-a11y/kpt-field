@@ -1,6 +1,7 @@
 /* Service Worker — فایل‌های برنامه را روی گوشی نگه می‌دارد تا بدون اینترنت هم باز شود.
    با هر نسخه‌ی جدید، عدد VERSION را یکی بالا ببرید. */
-var VERSION = 'kpt-field-v6';
+var PREFIX = 'kpt-field-test-';          // نسخه‌ی آزمایشی: 'kpt-field-test-'
+var VERSION = PREFIX + 'v7';
 var FILES = ['./', 'index.html', 'rcv.html', 'snd.html', 'config.js', 'api.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'icon-maskable.png', 'logo.png', 'app-logo.png'];
 
 self.addEventListener('install', function (e) {
@@ -8,7 +9,8 @@ self.addEventListener('install', function (e) {
 });
 self.addEventListener('activate', function (e) {
   e.waitUntil(caches.keys().then(function (keys) {
-    return Promise.all(keys.filter(function (k) { return k !== VERSION; }).map(function (k) { return caches.delete(k); }));
+    // فقط نسخه‌های قدیمی همین برنامه پاک شوند (برنامه‌ی آزمایشی و اصلی کش هم را پاک نکنند)
+    return Promise.all(keys.filter(function (k) { return k !== VERSION && k.indexOf(PREFIX) === 0 && (PREFIX !== 'kpt-field-' || k.indexOf('kpt-field-test-') !== 0); }).map(function (k) { return caches.delete(k); }));
   }).then(function () { return self.clients.claim(); }));
 });
 // فقط فایل‌های خود برنامه: اول از حافظه‌ی گوشی، و اگر اینترنت بود بی‌صدا نسخه‌ی تازه گرفته می‌شود

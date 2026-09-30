@@ -1,6 +1,6 @@
 /* ارتباط با سرور (Apps Script) از بیرون گوگل + ثبت Service Worker برای کار بدون اینترنت */
 (function () {
-  var SKEY = 'kpt_field_session';
+  var SKEY = ((window.KPT_CONFIG && window.KPT_CONFIG.storePrefix) || '') + 'kpt_field_session';
   window.KPT = {
     session: function () { try { return JSON.parse(localStorage.getItem(SKEY) || 'null'); } catch (e) { return null; } },
     saveSession: function (s) { try { s ? localStorage.setItem(SKEY, JSON.stringify(s)) : localStorage.removeItem(SKEY); } catch (e) {} },
