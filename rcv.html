@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ماموریت جمع‌آوری قطعات</title>
+<meta name="theme-color" content="#0E2A47">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<script src="config.js"></script>
+<script src="api.js"></script>
+<script>
+  /* برنامه‌ی میدانی: ارتباط با سرور از طریق درگاه Apps Script؛ بدون ورود ← صفحه‌ی خانه */
+  (function () {
+    var s = KPT.session();
+    if (!s || !s.user) { location.replace('index.html'); return; }
+    window.google = { script: { run: KPT.runner(KPT_CONFIG.rcvApi) } };
+    window.__FIELD_TOKEN = (s.rcv && s.rcv.token) || 'offline';
+  })();
+</script>
+<style>.homelink{position:fixed;top:8px;left:8px;z-index:40;background:#0E2A47;color:#fff;text-decoration:none;border-radius:99px;padding:4px 12px;font:12px Tahoma,Arial,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.2)}</style>
+<style>
+  /* ظاهر نزدیک به فرم‌های پروژه‌ی ارسال */
+  *{box-sizing:border-box}
+  body{margin:0;background:#eef3f8;color:#1c2530;font:13px/1.8 Tahoma,Arial,sans-serif}
+  .container{max-width:1000px;margin:14px auto 90px;background:#fff;border:1px solid #dde8f2;border-radius:12px;padding:18px}
+  h3{color:#0B4F8A;font-size:14.5px;margin:18px 0 8px;border-bottom:2px solid #e6eef6;padding-bottom:4px}
+  .note{color:#6b7785;font-size:12px;margin:4px 0}
+  .form-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+  .form-group{flex:1;min-width:180px}
+  .form-group label{display:block;font-weight:bold;margin-bottom:3px}
+  input[type=text],input[type=number],select,textarea{width:100%;padding:7px 9px;border:1px solid #c9d6e3;border-radius:7px;font:inherit;background:#fff}
+  input:disabled,select:disabled,textarea:disabled{background:#f3f5f8;color:#6b7785}
+  button{background:#0B4F8A;color:#fff;border:0;border-radius:7px;padding:7px 14px;font:inherit;cursor:pointer}
+  button:disabled{background:#9fb3c8;cursor:default}
+  button.done{background:#17694a}
+  .code{direction:ltr;unicode-bidi:isolate;font-family:Consolas,monospace}
+
+  /* سربرگ — مطابق فرم اعلام قطعات مورد نیاز */
+  table.head{width:100%;border-collapse:collapse;border:1px solid #000;margin-bottom:10px}
+  table.head td{border:1px solid #000;padding:4px 8px;font-size:13px}
+  table.head .lbl{font-weight:bold}
+  table.head .title{text-align:center;font-size:16px;font-weight:bold;width:24%}
+  table.head .logo{text-align:center;width:130px;font-weight:bold;font-size:11px;line-height:1.5}
+  table.head .logo img{height:44px;display:block;margin:0 auto 2px}
+
+  /* صف ماموریت‌ها */
+  .queue-item{background:#f4f8fc;border:1px solid #dde8f2;border-radius:10px;padding:10px 14px;margin-bottom:8px;cursor:pointer}
+  .queue-item:hover{border-color:#0B4F8A}
+  .queue-item b{color:#0B4F8A}
+  .info-box{background:#f4f8fc;border:1px solid #dde8f2;border-radius:8px;padding:8px 12px;margin-bottom:8px}
+
+  /* زمان‌ها */
+  .time-box{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .time-box .t{min-width:70px;font-weight:bold;direction:ltr;text-align:center;background:#f4f8fc;border:1px solid #dde8f2;border-radius:6px;padding:3px 8px}
+  .gps{font-size:11.5px;color:#6b7785;display:block}
+  .gps.far{color:#b3261e;font-weight:bold}
+  .q{font-size:11px;border-radius:99px;padding:0 8px}
+  .q.wait{background:#fff3d4;color:#7a4f00} .q.sent{background:#e0f3ea;color:#17694a}
+
+  /* جستجو و جدول جمع‌آوری */
+  .search-row{display:flex;gap:8px;position:sticky;top:0;background:#fff;padding:8px 0;z-index:5}
+  .search-row input{font-size:15px;padding:9px 11px;border:2px solid #0B4F8A}
+  .search-row label.qr{background:#fff;border:2px solid #0B4F8A;border-radius:7px;padding:0 12px;font-size:20px;display:flex;align-items:center;cursor:pointer;position:relative}
+  .search-row label.qr input{position:absolute;opacity:0;width:1px;height:1px}
+  .entry{background:#f4f8fc;border:1px solid #dde8f2;border-radius:10px;padding:10px 12px}
+  .entry label.qr{background:#fff;border:2px solid #0B4F8A;border-radius:7px;padding:0 12px;font-size:20px;display:flex;align-items:center;cursor:pointer;position:relative}
+  .entry label.qr input{position:absolute;opacity:0;width:1px;height:1px}
+  .search-hits{position:absolute;left:0;right:0;z-index:6;background:#fff;box-shadow:0 6px 18px rgba(0,0,0,.15);border-radius:6px}
+  .search-hits:empty{display:none}
+  table.grid button.sm{padding:2px 8px;font-size:11.5px;margin:1px}
+  table.grid button.del{background:#b3261e}
+  .search-hits div{padding:6px 10px;border:1px solid #dde8f2;border-radius:6px;margin-bottom:4px;cursor:pointer;background:#f9fbfd}
+  .search-hits div:hover{border-color:#0B4F8A}
+  mark{background:#ffe58a;color:inherit}
+  .tbl{overflow-x:auto;border:1px solid #000}
+  table.grid{width:100%;border-collapse:collapse;min-width:860px}
+  table.grid th,table.grid td{border:1px solid #000;padding:3px 5px;text-align:center;font-size:12.5px}
+  table.grid th{background:#e6ebf2}
+  table.grid td.desc{text-align:right}
+  table.grid input{width:64px;text-align:center;padding:4px;direction:ltr}
+  table.grid input.nt{width:120px;text-align:right;direction:rtl}
+  table.grid tr.sub td{font-weight:bold;background:#f5f9fd}
+  table.grid tr.hit td{background:#fff6b0 !important}
+  table.grid tr.ok td.ctl{color:#17694a;font-size:16px}
+  table.grid td.rem{direction:ltr;unicode-bidi:plaintext}
+  table.grid td.rem.pos{color:#b3261e;font-weight:bold}
+  table.grid td.rem.neg{color:#7a4f00;font-weight:bold}
+  table.grid input.err{border-color:#b3261e;background:#fbe9e7}
+
+  .msg{padding:8px 12px;border-radius:8px;margin:8px 0}
+  .msg.bad{background:#fbe9e7;color:#b3261e} .msg.ok{background:#e0f3ea;color:#17694a} .msg.warn{background:#fff3d4;color:#7a4f00}
+  .chk{display:flex;gap:8px;align-items:flex-start;font-weight:bold;margin-top:8px}
+  .chk input{width:20px;height:20px}
+  .signature-section{display:flex;gap:10px;margin-top:10px}
+  .signature-box{flex:1;border:1px solid #000;height:70px;padding:4px 8px;font-weight:bold}
+  .button-section{display:flex;gap:10px;margin-top:14px}
+  .button-section button{flex:1;padding:11px;font-size:14px}
+  .sync-bar{position:fixed;bottom:0;left:0;right:0;background:#0B4F8A;color:#fff;padding:6px 14px;font-size:12px;display:flex;gap:10px;align-items:center;justify-content:space-between;z-index:20}
+  .sync-bar button{background:rgba(255,255,255,.18);padding:3px 10px;font-size:11.5px}
+  .toast{position:fixed;bottom:44px;left:12px;right:12px;max-width:600px;margin:0 auto;padding:10px 14px;border-radius:8px;font-weight:bold;z-index:30;color:#fff}
+  .toast.ok{background:#17694a} .toast.bad{background:#b3261e} .toast.warn{background:#c7811d}
+  .hidden{display:none !important}
+  /* لیست برداشت (بدون تعداد) */
+  .pick-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+  .pick-bar{height:8px;background:#e6ebf2;border-radius:99px;overflow:hidden;flex:1;min-width:120px}
+  .pick-bar i{display:block;height:100%;background:#17694a}
+  table.grid.pick{min-width:0}
+  table.grid.pick td.desc{min-width:0}
+  table.pick tr.done td{background:#eef8f2;color:#5b6b63}
+  table.pick tr.go{cursor:pointer}
+  table.pick tr.go:hover td{background:#e8f0fa}
+  table.pick td.st{font-size:15px}
+</style>
+</head>
+<body>
+<a class="homelink" href="index.html">🏠 خانه</a>
+<div id="gate" class="container hidden" style="max-width:520px;text-align:center"><div class="msg bad" id="gateMsg"></div></div>
+
+<div class="container hidden" id="app">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+    <b style="color:#0B4F8A;font-size:15px">ماموریت جمع‌آوری قطعات</b><span class="note" id="who"></span>
+  </div>
+
+  <!-- ۱) ماموریت‌های من -->
+  <div id="queueSection">
+    <h3>ماموریت‌های من</h3>
+    <p class="note">ماموریت را <b>در قوا و با اینترنت</b> باز کنید تا لیستش روی گوشی ذخیره شود. بعد از آن، کار در سایت مشتری بدون اینترنت انجام می‌شود.</p>
+    <div id="queueList"></div>
+    <div id="serverList"></div>
+  </div>
+
+  <div id="formSection" class="hidden">
+    <div class="info-box">
+      <b>ماموریت:</b> <span id="selLabel"></span>
+      <button type="button" id="changeBtn" style="margin-right:10px">فهرست ماموریت‌ها</button>
+    </div>
+
+    <table class="head">
+      <tr>
+        <td><span class="lbl">شماره:</span> <b class="code" id="hDocNo"></b></td>
+        <td rowspan="4" class="title">فرم اعلام قطعات مورد نیاز<br><span style="font-size:12px;font-weight:normal">(ماموریت جمع‌آوری)</span></td>
+        <td><span class="lbl">تاریخ آزاد سازی:</span> <span id="hRelDate"></span></td>
+        <td rowspan="4" class="logo"><img src="https://i.imgur.com/j0SW3Gu.png" onerror="this.style.display='none'" alt="">شرکت قوای محرکه کرمان خودرو<br>K.P.T.Co.</td>
+      </tr>
+      <tr><td><span class="lbl">تاریخ:</span> <span id="hDate"></span></td><td><span class="lbl">ساعت آزاد سازی:</span> <span id="hRelTime"></span></td></tr>
+      <tr><td><span class="lbl">نام محصول:</span> <span id="hProduct"></span></td><td><span class="lbl">نام انبار:</span> <span id="hWhName"></span></td></tr>
+      <tr><td><span class="lbl">شماره پک:</span> <span id="hPack"></span></td><td><span class="lbl">شماره lot:</span> <b id="hLot"></b></td></tr>
+      <tr><td colspan="4"><span class="lbl">شماره مجوز:</span> <span id="hPermit"></span></td></tr>
+    </table>
+
+    <div class="form-row">
+      <div class="form-group"><label>جمع‌آوری کننده</label><input type="text" id="collector" disabled></div>
+      <div class="form-group"><label>نام فرد کمکی</label><input type="text" id="helperName"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>نفر شیفت</label><input type="number" id="shiftCrewCount" min="0"></div>
+      <div class="form-group"><label>وضعیت آماده سازی</label>
+        <select id="prepStatus"><option value="">انتخاب کنید</option><option>در حال آماده‌سازی</option><option>تکمیل شده</option></select></div>
+      <div class="form-group"><label>پیش‌بینی زمان تحویل</label><input type="text" id="expectedDeliveryTime" placeholder="مثلاً 14:30"></div>
+    </div>
+
+    <h3>زمان‌ها — قبل از جمع‌آوری</h3>
+    <div class="form-row" id="times1"></div>
+
+    <h3>لیست برداشت</h3>
+    <div class="pick-head">
+      <span id="pickCount" class="note"></span><div class="pick-bar"><i id="pickBar"></i></div>
+      <label class="note" style="white-space:nowrap"><input type="checkbox" id="pickLeft"> فقط باقی‌مانده‌ها</label>
+    </div>
+    <div class="tbl" style="max-height:320px;overflow:auto">
+      <table class="grid pick">
+        <thead><tr><th>ردیف</th><th>شماره فنی</th><th>شرح فارسی</th><th id="pickBoxTh">کیس / کارتن</th><th>وضعیت</th></tr></thead>
+        <tbody id="pickBody"></tbody>
+      </table>
+    </div>
+    <p class="note">تعداد لیست نمایش داده نمی‌شود (شمارش کور). با لمس هر ردیف، شماره فنی و کیس/کارتن در پنل ثبت پر می‌شود.</p>
+
+    <h3>جدول جمع‌آوری</h3>
+    <p class="note" id="gridNote"></p>
+    <div class="entry" id="entryPanel">
+      <div class="form-row">
+        <div class="form-group" style="flex:2;position:relative">
+          <label>شماره فنی (از روی قطعه یا لیبل)</label>
+          <div style="display:flex;gap:6px">
+            <input type="text" id="ePart" class="code" placeholder="تایپ یا اسکن شماره فنی…" autocomplete="off" style="font-size:15px">
+            <label class="qr" id="qrBtn" title="عکس از QR">📷<input type="file" id="qrShot" accept="image/*" capture="environment"></label>
+          </div>
+          <div class="search-hits" id="hits"></div>
+          <div id="eDesc" class="note"></div>
+        </div>
+        <div class="form-group"><label>کیس / کارتن</label><select id="eBox" disabled><option value="">اول شماره فنی</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>تعداد بسته</label><input type="number" id="ePk" min="1" inputmode="numeric" disabled></div>
+        <div class="form-group"><label>تعداد در بسته</label><input type="number" id="ePer" min="1" inputmode="numeric" disabled></div>
+        <div class="form-group"><label>تعداد کل</label><input type="text" id="eTot" disabled></div>
+        <div class="form-group" style="flex:2"><label>توضیحات</label><input type="text" id="eNote" disabled></div>
+      </div>
+      <button type="button" id="eAdd" disabled>افزودن به جدول</button>
+      <button type="button" id="eCancel" class="hidden" style="background:#6b7785">انصراف از ویرایش</button>
+    </div>
+    <div class="tbl" style="margin-top:10px">
+      <table class="grid">
+        <thead><tr>
+          <th>ردیف</th><th>کنترل</th><th>شماره فنی</th><th>کیس</th><th>کارتن</th><th>شرح فارسی</th>
+          <th>تعداد بسته</th><th>تعداد در بسته</th><th>تعداد کل</th><th>باقی مانده</th><th>توضیحات</th><th></th>
+        </tr></thead>
+        <tbody id="gridBody"></tbody>
+      </table>
+    </div>
+
+    <h3>زمان‌ها — بعد از جمع‌آوری</h3>
+    <div class="form-row" id="times2"></div>
+
+    <div id="cmpSection" class="hidden">
+      <h3>مقایسه با لیست درخواست</h3>
+      <p class="note">تعداد لیست درخواست فقط از این مرحله به بعد نمایش داده می‌شود.</p>
+      <div id="cmpSummary"></div>
+      <div class="tbl"><table class="grid" style="min-width:760px">
+        <thead><tr><th>ردیف لیست</th><th>شماره فنی</th><th>کیس / کارتن</th><th>شرح فارسی</th><th>تعداد لیست</th><th>جمع‌آوری‌شده</th><th>باقی مانده</th><th>وضعیت</th><th>توضیح اضافه</th></tr></thead>
+        <tbody id="cmpBody"></tbody>
+      </table></div>
+    </div>
+
+    <div id="shortSection" class="hidden">
+      <h3>کنترل کسری (شمارش دوم با حضور نماینده انبار مشتری)</h3>
+      <p class="note">ردیف‌هایی که «باقی مانده» دارند با حضور نماینده‌ی انبار مشتری دوباره شمرده می‌شوند (اگر شمارش دوم با اول برابر نبود، شمارش سوم لازم است).
+        در شمارش دوم/سوم <b>کل تعداد فیزیکی</b> را بزنید (همراه با هر چیزی که انبار مشتری بعد از اعلام کسری تحویل داد). تعداد تحویل تکمیلی را جدا در ستون خودش بنویسید؛ فقط برای بایگانی است و دوباره جمع نمی‌شود. اگر آخرین شمارش به تعداد لیست برسد، کسری برطرف می‌شود و علت لازم نیست.</p>
+      <div class="form-row"><div class="form-group" style="max-width:360px"><label>نام نماینده‌ی انبار مشتری (حاضر در شمارش دوم)</label><input type="text" id="custRep"></div></div>
+      <div class="tbl"><table class="grid" style="min-width:900px">
+        <thead><tr><th>ردیف</th><th>شماره فنی</th><th>کیس / کارتن</th><th>تعداد کل</th><th>شمارش اول</th><th>باقی مانده</th><th>شمارش دوم</th><th>شمارش سوم</th><th>تحویل تکمیلی (بایگانی)</th><th>کسری نهایی</th><th>علت کسری</th></tr></thead>
+        <tbody id="shortBody"></tbody>
+      </table></div>
+      <div id="rcMsg"></div>
+      <div class="button-section"><button type="button" id="rcBtn">ثبت شمارش دوم و مقدار نهایی</button></div>
+    </div>
+
+    <h3>سند خروج</h3>
+    <div class="form-row">
+      <div class="form-group"><label>شماره سند خروج</label><input type="text" id="exitNo" class="code"></div>
+      <div class="form-group"><label>دریافت سند خروج</label><div class="time-box" id="tb_EXIT_DOC"></div></div>
+    </div>
+    <label class="chk"><input type="checkbox" id="exitOk"><span id="exitOkText">سند خروج دقیقاً با جدول جمع‌آوری بالا صادر شده است.</span></label>
+
+    <h3>زمان‌ها — خروج و انتقال</h3>
+    <div class="form-row" id="times3"></div>
+
+    <h3>توضیحات</h3>
+    <textarea id="description" rows="3" placeholder="در صورت نیاز توضیحات اینجا ثبت شود..."></textarea>
+
+    <div class="signature-section">
+      <div class="signature-box">تحویل گیرنده:</div>
+      <div class="signature-box">تحویل دهنده:<br>ساعت تحویل:</div>
+      <div class="signature-box">تایید کننده:</div>
+    </div>
+
+    <div id="finalMsg"></div>
+    <div class="button-section"><button type="button" id="closeBtn">ثبت نهایی (بستن ماموریت)</button></div>
+    <p class="note">پس از ثبت نهایی، جدول جمع‌آوری قفل می‌شود. کسری‌ها برای تأیید سرپرست در بله ارسال می‌شود.</p>
+  </div>
+</div>
+
+<div class="sync-bar"><span id="syncText">…</span><span><button id="syncNow">ارسال الان</button></span></div>
+<div id="toastHost"></div>
+<script>
+/* ==================================================================
+   ماموریت جمع‌آوری — متصل به سرور (ReceiveMission.gs)
+   - لیست ماموریت یک بار (در قوا، آنلاین) روی گوشی ذخیره می‌شود.
+   - همه‌ی ثبت‌ها اول روی گوشی (localStorage) نوشته می‌شوند و در صف ارسال می‌روند.
+   - صف در پس‌زمینه، هر وقت اینترنت بود، دسته‌ای به سرور فرستاده می‌شود.
+   - با بستن مرورگر چیزی از بین نمی‌رود؛ با باز کردن دوباره ادامه پیدا می‌کند.
+   ================================================================== */
+var SESSION_TOKEN = window.__FIELD_TOKEN || 'offline';
+var FEATURE_QR = true;
+var REASONS = ['کیس/کارتن ناقص از مبدأ', 'قطعه آسیب‌دیده', 'کیس/کارتن پیدا نشد', 'سایر (در توضیحات)'];
+var TIMES = [
+  { key: 'START',           label: 'شروع ماموریت',            box: 'times1', place: 'home' },
+  { key: 'CUST_ARRIVAL',    label: 'رسیدن به انبار مشتری',    box: 'times1', place: 'site' },
+  { key: 'PREP_START',      label: 'شروع آماده‌سازی و شمارش', box: 'times1', place: 'site' },
+  { key: 'COLLECTION_END',  label: 'پایان جمع‌آوری',           box: 'times2', place: 'site' },
+  { key: 'INSPECTION',      label: 'اعلام بازرسی',             box: 'times2', place: 'site' },
+  { key: 'WAREHOUSE_EMAIL', label: 'ارسال ایمیل از انبار',     box: 'times2', place: 'site' },
+  { key: 'EXIT_DOC',        label: 'دریافت سند خروج',          box: 'exit',   place: 'site' },
+  { key: 'SECURITY_CHECK',  label: 'کنترل انتظامات',           box: 'times3', place: 'site' },
+  { key: 'SITE_EXIT',       label: 'خروج از سایت مشتری',       box: 'times3', place: 'site' },
+  { key: 'KPT_ARRIVAL',     label: 'ساعت ورود به قوا',         box: 'times3', place: 'home' }
+];
+var INFO_FIELDS = ['helperName', 'shiftCrewCount', 'prepStatus', 'expectedDeliveryTime', 'description'];
+
+/* ---------------- ابزارها ---------------- */
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function errText(e) { return e && e.message ? e.message : String(e); }
+function lat(s) { return String(s == null ? '' : s).replace(/[۰-۹]/g, function (d) { return d.charCodeAt(0) - 0x06F0; }).replace(/[٠-٩]/g, function (d) { return d.charCodeAt(0) - 0x0660; }); }
+function num(v) { var s = lat(v).trim(); return s === '' ? null : (isFinite(Number(s)) ? Number(s) : null); }
+function np(s) { return lat(s).toUpperCase().replace(/[^A-Z0-9]/g, ''); }
+function nf(s) { return lat(s).replace(/ي/g, 'ی').replace(/ك/g, 'ک').replace(/[‌‍]/g, ' ').toLowerCase().replace(/\s+/g, ' ').trim(); }
+function pad(x) { return ('0' + x).slice(-2); }
+function fmtTime(ms) { var d = new Date(ms); return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()); }
+function toast(t, k) {
+  $('toastHost').innerHTML = '<div class="toast ' + (k || 'ok') + '">' + esc(t).replace(/[A-Za-z0-9][A-Za-z0-9\-\/._:]*/g, function (w) { return '<bdi>' + w + '</bdi>'; }) + '</div>';
+  clearTimeout(toast.t); toast.t = setTimeout(function () { $('toastHost').innerHTML = ''; }, 2800);
+  if (k === 'bad' && navigator.vibrate) try { navigator.vibrate([120, 60, 120]); } catch (e) {}
+}
+function distM(a, b, c, d) {
+  var R = 6371000, r = function (x) { return x * Math.PI / 180; };
+  var dLat = r(c - a), dLng = r(d - b);
+  var h = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(r(a)) * Math.cos(r(c)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  return Math.round(R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h)));
+}
+
+/* ---------------- ذخیره روی گوشی ---------------- */
+var ME = null, DB = null, STORE = null;
+function loadDB() {
+  var d = null;
+  try { d = JSON.parse(localStorage.getItem(STORE) || 'null'); } catch (e) {}
+  DB = d || { pkgs: {}, st: {}, queue: [], seq: 0, offset: 0, active: null, lastSync: 0 };
+}
+function save() {
+  try { localStorage.setItem(STORE, JSON.stringify(DB)); }
+  catch (e) { toast('حافظه‌ی گوشی پر است یا ذخیره ممکن نیست! ماموریت‌های تمام‌شده را از گوشی حذف کنید.', 'bad'); }
+}
+function nowSrv() { return Date.now() + (DB.offset || 0); }       // زمان تصحیح‌شده با ساعت سرور
+function P() { return DB.pkgs[DB.active]; }
+function MS() { return DB.st[DB.active]; }
+function rows() { return P().rows.map(function (r) { return { no: r.rowNo, cs: r.caseNo, bx: r.boxNo, pn: r.partNo, desc: r.descFa, total: r.expected, unit: r.unit || 'عدد' }; }); }
+function counted(no) { var x = MS().rows[no]; if (!x || x.pk == null || x.per == null) return null; return r3(x.pk * x.per); }
+function r3(n) { return Math.round(n * 1000) / 1000; }
+// لیست «درخواست دستی»: کیس/کارتن ندارد؛ مقدار مستقیم با واحد (اعشار مجاز) وارد می‌شود
+function MAN() { return P().header.source === 'MANUAL'; }
+function boxLbl(r) { return (r.cs || r.bx) ? 'کیس ' + r.cs + ' / کارتن ' + r.bx : ''; }
+function boxCell(r) { return (r.cs || r.bx) ? esc(r.cs) + ' / ' + esc(r.bx) : '—'; }
+function refOf(h, lot) { return h.ref || ('lot ' + (lot == null ? h.lotNo : lot)); }
+function closed() { var s = MS().status; return s === 'CLOSED' || s === 'SHORTAGE_PENDING' || s === 'TRANSFERRED'; }
+
+/* ---------------- صف ارسال ---------------- */
+function enqueue(item) {
+  DB.seq++;
+  item.id = ME.userID + '-' + DB.active + '-' + DB.seq + '-' + Date.now();
+  item.at = item.at || nowSrv();
+  DB.queue.push({ missionID: DB.active, missionKey: P().missionKey, item: item });
+  save(); syncUi(); kick();
+  return item.id;
+}
+var inflight = false, nextTry = 0, lastErr = '';
+function kick() { setTimeout(pump, 50); }
+function pump() {
+  if (inflight || !DB || !DB.queue.length || Date.now() < nextTry) return;
+  var first = DB.queue[0], batch = [];
+  for (var i = 0; i < DB.queue.length && batch.length < 40; i++) {
+    if (DB.queue[i].missionID !== first.missionID) break;           // هر درخواست فقط یک ماموریت، به ترتیب صف
+    batch.push(DB.queue[i].item);
+  }
+  inflight = true; syncUi();
+  var sentAt = Date.now();
+  google.script.run
+    .withSuccessHandler(function (res) {
+      inflight = false; lastErr = ''; nextTry = 0;
+      if (res.transferred) {                                          // سرپرست ماموریت را به فرد دیگری سپرده است
+        var tm = first.missionID, ts = DB.st[tm];
+        DB.queue = DB.queue.filter(function (q) { return q.missionID !== tm; });
+        if (ts) { ts.status = 'TRANSFERRED'; ts.transferredTo = res.collectorName || ''; }
+        save(); syncUi(); toast('ماموریت ' + tm + ' به ' + (res.collectorName || 'فرد دیگری') + ' منتقل شده است؛ از این گوشی دیگر قابل ثبت نیست.', 'warn');
+        if (DB.active === tm && !$('formSection').classList.contains('hidden')) renderAll(); else renderQueue();
+        if (DB.queue.length) kick();
+        return;
+      }
+      var ack = {}; (res.acked || []).forEach(function (id) { ack[id] = 1; });
+      DB.queue = DB.queue.filter(function (q) { return !ack[q.item.id]; });
+      if (res.serverNow) DB.offset = res.serverNow - Math.round((sentAt + Date.now()) / 2);
+      DB.lastSync = Date.now();
+      save(); syncUi(); refreshMarks();
+      if (DB.queue.length) kick();
+    })
+    .withFailureHandler(function (e) {
+      inflight = false; lastErr = errText(e);
+      nextTry = Date.now() + 15000;                                   // اینترنت ضعیف: ۱۵ ثانیه بعد دوباره
+      syncUi();
+    })
+    .rcvSync({ missionID: first.missionID, missionKey: first.missionKey, items: batch });
+}
+setInterval(pump, 5000);
+window.addEventListener('online', function () { nextTry = 0; kick(); });
+$('syncNow').addEventListener('click', function () { nextTry = 0; kick(); });
+
+function pendingIds() { var o = {}; (DB.queue || []).forEach(function (q) { o[q.item.id] = 1; }); return o; }
+function syncUi() {
+  if (!DB) return;
+  var n = DB.queue.length, t;
+  if (!n) t = '✔ همه‌ی ثبت‌ها به سرور رسید' + (DB.lastSync ? ' (آخرین ارسال ' + fmtTime(DB.lastSync) + ')' : '');
+  else if (inflight) t = '⏳ در حال ارسال ' + n + ' مورد…';
+  else if (lastErr) t = '✖ ارسال نشد (اینترنت) — ' + n + ' مورد روی گوشی در صف است و خودکار دوباره فرستاده می‌شود';
+  else t = '⏳ ' + n + ' مورد در صف ارسال';
+  $('syncText').textContent = t;
+}
+function refreshMarks() {
+  var pend = pendingIds();
+  document.querySelectorAll('[data-q]').forEach(function (el) {
+    var w = pend[el.getAttribute('data-q')];
+    el.className = 'q ' + (w ? 'wait' : 'sent'); el.textContent = w ? '⏳ در صف' : '✔ ارسال شد';
+  });
+}
+
+/* ---------------- نشست و شروع ---------------- */
+var lastPing = 0;
+['pointerdown', 'keydown'].forEach(function (ev) {
+  document.addEventListener(ev, function () { var n = Date.now(); if (n - lastPing < 5000) return; lastPing = n; try { parent.postMessage({ kptActivity: true }, '*'); } catch (e) {} }, { passive: true });
+});
+function showGate(t) { $('gate').classList.remove('hidden'); $('app').classList.add('hidden'); $('gateMsg').textContent = t; }
+(function init() {
+  if (typeof google === 'undefined' || !google.script) { showGate('این صفحه باید از داخل برنامه (Apps Script) باز شود.'); return; }
+  if (!SESSION_TOKEN) { showGate('این صفحه باید از داخل هاب باز شود.'); return; }
+  google.script.run
+    .withSuccessHandler(function (r) {
+      if (!r || !r.access || !r.access.mission_open) { showGate('برای ماموریت جمع‌آوری دسترسی ندارید.'); return; }
+      startApp(r.user, true);
+    })
+    .withFailureHandler(function () {
+      // سرور جواب نداد (اینترنت نیست) یا نشست تمام شده: ماموریت‌های روی گوشی باز می‌شوند و صف بعداً ارسال می‌شود
+      var last = null; try { last = JSON.parse(localStorage.getItem('kpt_rcv_last_user') || 'null'); } catch (e) {}
+      if (!last) { showGate('ارتباط با سرور برقرار نشد. وقتی اینترنت وصل شد دوباره باز کنید.'); return; }
+      startApp(last, false);
+      toast('بدون ارتباط با سرور — ماموریت‌های روی گوشی باز شد؛ ثبت‌ها ذخیره می‌شوند و خودکار ارسال می‌شوند.', 'warn');
+    })
+    .authPing(SESSION_TOKEN);
+})();
+function startApp(u, online) {
+  ME = u; STORE = 'kpt_rcv_v1_' + ME.userID;
+  try { localStorage.setItem('kpt_rcv_last_user', JSON.stringify({ userID: u.userID, fullName: u.fullName, jobTitle: u.jobTitle })); } catch (e) {}
+  loadDB();
+  $('who').innerHTML = '<b>' + esc(ME.fullName) + '</b> (' + esc(ME.jobTitle) + ')' + (online ? '' : ' — <span style="color:#b35c00">آفلاین</span>');
+  $('gate').classList.add('hidden'); $('app').classList.remove('hidden');
+  renderQueue(); syncUi(); kick();
+  if (online) loadServerList(); else $('serverList').innerHTML = '<p class="msg warn">سرور در دسترس نیست؛ ماموریت جدید بعداً دریافت می‌شود. ماموریت‌های روی گوشی قابل استفاده‌اند.</p>';
+  if (DB.active && DB.pkgs[DB.active]) openForm();
+}
+
+/* ---------------- ۱) ماموریت‌های من ---------------- */
+var ST_LBL = { ASSIGNED: 'تخصیص‌یافته', STARTED: 'در حال انجام', CLOSED: 'بسته شد', SHORTAGE_PENDING: 'بسته شد — کسری در انتظار تأیید', TRANSFERRED: '🔁 به فرد دیگری منتقل شد' };
+function renderQueue() {
+  var ids = Object.keys(DB.pkgs);
+  $('queueList').innerHTML = ids.length ? '<p class="note"><b>روی این گوشی (بدون اینترنت هم باز می‌شود):</b></p>' + ids.map(function (id) {
+    var p = DB.pkgs[id], s = DB.st[id], pend = DB.queue.filter(function (q) { return q.missionID === id; }).length;
+    var done = s.times.KPT_ARRIVAL && !pend;
+    return '<div class="queue-item" data-m="' + esc(id) + '"><b>ماموریت ' + esc(id) + '</b> — شماره ' + esc(p.header.docNo) + ' — ' + esc(p.header.warehouseName) +
+      ' — ' + esc(refOf(p.header)) + ' — ' + p.rows.length + (p.header.source === 'MANUAL' ? ' قلم — ' : ' کارتن — ') + (ST_LBL[s.status] || s.status) +
+      (pend ? ' — <span class="q wait">⏳ ' + pend + ' مورد در صف</span>' : '') +
+      ((done || s.status === 'TRANSFERRED') ? ' <button type="button" data-rmpkg="' + esc(id) + '" style="background:#6b7785;padding:1px 8px;font-size:11px">حذف از گوشی</button>' : '') + '</div>';
+  }).join('') : '';
+  document.querySelectorAll('[data-m]').forEach(function (el) {
+    el.addEventListener('click', function (e) { if (e.target.getAttribute('data-rmpkg')) return; DB.active = el.getAttribute('data-m'); save(); openForm(); });
+  });
+  document.querySelectorAll('[data-rmpkg]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var id = b.getAttribute('data-rmpkg');
+      if (!confirm('ماموریت ' + id + ' تمام و ارسال شده است. از روی گوشی حذف شود؟')) return;
+      delete DB.pkgs[id]; delete DB.st[id]; if (DB.active === id) DB.active = null; save(); renderQueue();
+    });
+  });
+}
+function loadServerList() {
+  $('serverList').innerHTML = '<p class="note">در حال دریافت ماموریت‌های جدید از سرور…</p>';
+  google.script.run
+    .withSuccessHandler(function (res) {
+      if (res.serverNow) DB.offset = res.serverNow - Date.now();
+      var list = (res.missions || []).filter(function (m) { return !DB.pkgs[m.missionID]; });
+      $('serverList').innerHTML = list.length ? '<p class="note"><b>ماموریت‌های جدید (برای ذخیره روی گوشی، لمس کنید):</b></p>' + list.map(function (m) {
+        return '<div class="queue-item" data-dl="' + esc(m.missionID) + '"><b>ماموریت ' + esc(m.missionID) + '</b> — شماره ' + esc(m.docNo) + ' — ' + esc(m.warehouseName) +
+          ' — ' + esc(m.ref || ('lot ' + m.lotNos)) + ' — ' + m.rowCount + ' ردیف — ' + esc(m.missionDate) + '</div>';
+      }).join('') : (Object.keys(DB.pkgs).length ? '' : '<p class="note">ماموریت بازی برای شما ثبت نشده است.</p>');
+      document.querySelectorAll('[data-dl]').forEach(function (el) { el.addEventListener('click', function () { download(el.getAttribute('data-dl'), el); }); });
+    })
+    .withFailureHandler(function (e) { $('serverList').innerHTML = '<p class="msg warn">فهرست جدید از سرور دریافت نشد (' + esc(errText(e)) + '). ماموریت‌های روی گوشی قابل استفاده‌اند.</p>'; })
+    .rcvMyMissions(SESSION_TOKEN);
+}
+function download(id, el) {
+  el.textContent = 'در حال دریافت و ذخیره‌ی لیست روی گوشی…';
+  var t0 = Date.now();
+  google.script.run
+    .withSuccessHandler(function (p) {
+      DB.offset = p.serverNow - Math.round((t0 + Date.now()) / 2);
+      DB.pkgs[id] = p;
+      // اگر روی گوشی دیگری شروع شده بود، زمان‌ها و شمارش‌هایی که به سرور رسیده برمی‌گردد
+      var s = { times: {}, rows: {}, recount: {}, info: p.progress.info || {}, exitNo: p.progress.exitDocNo || '', exitOk: false, status: 'STARTED' };
+      Object.keys(p.progress.times || {}).forEach(function (k) { s.times[k] = { time: p.progress.times[k], dist: null, fromServer: true }; });
+      Object.keys(p.progress.rows || {}).forEach(function (no) { s.rows[no] = p.progress.rows[no]; });
+      DB.st[id] = s; DB.active = id; save();
+      toast('لیست ماموریت روی گوشی ذخیره شد.', 'ok');
+      openForm();
+    })
+    .withFailureHandler(function (e) { el.textContent = 'دریافت ناموفق بود: ' + errText(e) + ' — دوباره لمس کنید.'; })
+    .rcvDownloadMission(SESSION_TOKEN, id);
+}
+$('changeBtn').addEventListener('click', function () {
+  DB.active = null; save();
+  $('formSection').classList.add('hidden'); $('queueSection').classList.remove('hidden'); renderQueue(); loadServerList();
+});
+
+/* ---------------- ۲) فرم ---------------- */
+function openForm() {
+  var p = P(), h = p.header, s = MS();
+  $('queueSection').classList.add('hidden'); $('formSection').classList.remove('hidden');
+  $('selLabel').textContent = p.missionID + ' — شماره ' + h.docNo + ' — ' + h.warehouseName + (s.status === 'TRANSFERRED' ? ' — 🔁 منتقل شد به ' + (s.transferredTo || 'فرد دیگر') + ' (فقط خواندنی)' : '');
+  $('hDocNo').textContent = h.docNo; $('hDate').textContent = h.docDate; $('hRelDate').textContent = h.releaseDate; $('hRelTime').textContent = h.releaseTime;
+  $('hProduct').textContent = h.productName; $('hPack').textContent = h.packNo; $('hLot').textContent = h.source === 'MANUAL' ? h.refDocNo : h.lotNo;
+  $('hLot').previousElementSibling.textContent = h.source === 'MANUAL' ? 'برگ درخواست دستی:' : 'شماره lot:';
+  setEntryMode();
+  $('hWhName').textContent = h.warehouseName; $('hPermit').textContent = h.permitNo;
+  $('collector').value = p.collectorName;
+  INFO_FIELDS.forEach(function (k) {
+    $(k).value = s.info[k] || '';
+    $(k).onchange = function () {
+      s.info[k] = this.value; save();
+      var f = {}; f[k] = this.value; enqueue({ type: 'INFO', fields: f });
+    };
+  });
+  $('exitNo').value = s.exitNo || ''; $('exitOk').checked = !!s.exitOk;
+  $('qrBtn').classList.toggle('hidden', !FEATURE_QR);
+  resetEntry(); renderAll();
+}
+function renderAll() {
+  renderTimes(); renderPick(); renderGrid(); renderCompare(); renderShort(); renderExit(); syncUi(); refreshMarks();
+  var dis = closed();
+  INFO_FIELDS.forEach(function (k) { $(k).disabled = dis; });
+}
+
+/* ---------------- زمان‌ها + GPS ---------------- */
+function canRecord(i) {
+  var s = MS(), t = TIMES[i];
+  if (s.times[t.key]) return false;
+  if (i > 0 && !s.times[TIMES[i - 1].key]) return false;
+  if (t.key === 'EXIT_DOC') return exitReady().ok;
+  if (t.key === 'SITE_EXIT' && !closed()) return false;
+  return true;
+}
+function timeBoxHtml(i) {
+  var t = TIMES[i], ev = MS().times[t.key], place = P().places[t.place], far = ev && ev.dist != null && place && ev.dist > place.radius;
+  var gps = !ev ? '' : ev.fromServer ? '<span class="gps">(از سرور)</span>' :
+    ev.dist == null ? '<span class="gps">' + (ev.noGps ? 'GPS در دسترس نبود' : 'مختصات مقصد تعریف نشده') + '</span>' :
+    '<span class="gps' + (far ? ' far' : '') + '">فاصله از ' + esc(place.name) + ': ' + ev.dist + ' متر ' + (far ? '⚠️ خارج از محدوده' : '✅') + '</span>';
+  return '<span class="t">' + (ev ? ev.time : '--:--:--') + '</span>' +
+    '<button type="button" data-t="' + i + '"' + (canRecord(i) ? '' : ' disabled') + (ev ? ' class="done"' : '') + '>' + (ev ? '✓ ثبت شد' : 'ثبت زمان') + '</button>' +
+    (ev && ev.q ? '<span data-q="' + esc(ev.q) + '"></span>' : '') + gps;
+}
+function renderTimes() {
+  ['times1', 'times2', 'times3'].forEach(function (b) { $(b).innerHTML = ''; });
+  TIMES.forEach(function (t, i) {
+    if (t.box === 'exit') { $('tb_EXIT_DOC').innerHTML = timeBoxHtml(i); return; }
+    $(t.box).insertAdjacentHTML('beforeend', '<div class="form-group"><label>' + t.label + '</label><div class="time-box">' + timeBoxHtml(i) + '</div></div>');
+  });
+  document.querySelectorAll('[data-t]').forEach(function (b) { b.addEventListener('click', function () { recordTime(Number(b.getAttribute('data-t')), b); }); });
+}
+function getGps() {
+  return new Promise(function (resolve) {
+    if (!navigator.geolocation) return resolve(null);
+    var done = false;
+    setTimeout(function () { if (!done) { done = true; resolve(null); } }, 12000);
+    navigator.geolocation.getCurrentPosition(
+      function (p) { if (!done) { done = true; resolve({ lat: p.coords.latitude, lng: p.coords.longitude }); } },
+      function () { if (!done) { done = true; resolve(null); } },
+      { enableHighAccuracy: true, timeout: 11000, maximumAge: 30000 });
+  });
+}
+function recordTime(i, btn) {
+  var t = TIMES[i], s = MS();
+  if (t.key === 'EXIT_DOC') { var r = exitReady(); if (!r.ok) { toast(r.msg, 'bad'); return; } }
+  if (t.key === 'COLLECTION_END' && !confirm('بعد از «پایان جمع‌آوری» جدول قفل می‌شود و مقایسه با لیست نمایش داده می‌شود. ادامه می‌دهید؟')) return;
+  var at = nowSrv();                                   // ساعت همان لحظه‌ی زدن دکمه
+  btn.disabled = true; btn.textContent = 'در حال گرفتن موقعیت…';
+  getGps().then(function (g) {
+    var place = P().places[t.place];
+    var dist = (g && place && place.lat != null) ? distM(g.lat, g.lng, place.lat, place.lng) : null;
+    var ev = { time: fmtTime(at), at: at, dist: dist, noGps: !g };
+    s.times[t.key] = ev;
+    var item = { type: 'EVENT', key: t.key, at: at };
+    if (g) { item.lat = g.lat; item.lng = g.lng; }
+    if (t.key === 'START') item.clockOffset = DB.offset;
+    ev.q = enqueue(item);
+    save();
+    var far = dist != null && dist > place.radius;
+    toast(t.label + ': ' + ev.time + (far ? ' — ⚠️ خارج از محدوده' : ''), far ? 'warn' : 'ok');
+    renderAll();
+    if (t.key === 'EXIT_DOC') doClose();
+  });
+}
+
+/* ---------------- جدول جمع‌آوری (ورود کور) ---------------- */
+var cur = null, editNo = null;
+function gridOpen() { return !!MS().times.PREP_START && !MS().times.COLLECTION_END && !closed(); }
+function revealed() { return !!MS().times.COLLECTION_END; }
+function uniqueParts() {
+  var map = {}, out = [];
+  rows().forEach(function (r) { if (!map[r.pn]) { map[r.pn] = { pn: r.pn, desc: r.desc, rows: [] }; out.push(map[r.pn]); } map[r.pn].rows.push(r); });
+  return out;
+}
+/* ---------------- لیست برداشت: چه چیزهایی برای این ماموریت تقسیم شده (بدون تعداد) ---------------- */
+function renderPick() {
+  var s = MS(), list = rows(), man = MAN(), onlyLeft = $('pickLeft').checked;
+  var done = list.filter(function (r) { return s.rows[r.no]; }).length;
+  $('pickCount').textContent = done + ' از ' + list.length + (man ? ' قلم' : ' کارتن') + ' ثبت شده';
+  $('pickBar').style.width = Math.round(100 * done / Math.max(list.length, 1)) + '%';
+  $('pickBoxTh').classList.toggle('hidden', man);
+  var canPick = gridOpen();
+  $('pickBody').innerHTML = list.filter(function (r) { return !onlyLeft || !s.rows[r.no]; }).map(function (r) {
+    var ok = !!s.rows[r.no];
+    return '<tr data-pk="' + r.no + '" class="' + (ok ? 'done' : '') + (canPick ? ' go' : '') + '"><td>' + r.no + '</td><td class="code">' + esc(r.pn) + '</td>' +
+      '<td class="desc">' + esc(r.desc) + '</td>' + (man ? '' : '<td class="code">' + boxCell(r) + '</td>') +
+      '<td class="st">' + (ok ? '✅' : '⬜') + '</td></tr>';
+  }).join('') || '<tr><td colspan="5" class="note">' + (onlyLeft ? 'همه ثبت شده‌اند ✔' : 'ردیفی نیست.') + '</td></tr>';
+  document.querySelectorAll('[data-pk]').forEach(function (tr) {
+    tr.addEventListener('click', function () {
+      if (!gridOpen()) { toast(closed() || revealed() ? 'جمع‌آوری تمام شده است.' : 'اول زمان «شروع آماده‌سازی و شمارش» را ثبت کنید.', 'warn'); return; }
+      var no = Number(tr.getAttribute('data-pk')), r = rows().filter(function (y) { return y.no === no; })[0];
+      if (MS().rows[no]) { startEdit(no); return; }
+      resetEntry(); pickPart(r.pn, 'list');
+      $('eBox').value = String(no);
+      $('entryPanel').scrollIntoView({ block: 'center' });
+      setTimeout(function () { (MAN() ? $('ePer') : $('ePk')).focus(); }, 50);
+    });
+  });
+}
+$('pickLeft').addEventListener('change', renderPick);
+
+function renderGrid() {
+  var s = MS(), open = gridOpen(), rev = revealed();
+  $('gridNote').textContent = closed() || rev ? 'جمع‌آوری تمام شده و جدول قفل است. نتیجه‌ی مقایسه پایین‌تر آمده است.' :
+    (open ? (MAN() ? 'هر قطعه‌ای که برداشته می‌شود: شماره فنی را وارد کنید و مقدار را با واحدش بزنید (اعشار مجاز است). شماره فنی خارج از لیست پذیرفته نمی‌شود.' : 'هر قطعه‌ای که برداشته می‌شود: شماره فنی را از روی قطعه وارد کنید، کیس/کارتن را انتخاب کنید و تعداد را بزنید. شماره فنی خارج از لیست پذیرفته نمی‌شود.') :
+            'جدول بعد از ثبت زمان «شروع آماده‌سازی و شمارش» باز می‌شود.');
+  $('entryPanel').classList.toggle('hidden', !open);
+  var list = rows().filter(function (r) { return s.rows[r.no]; }), html = '', sub = 0, subExp = 0, seq = 0;
+  list.forEach(function (r, i) {
+    var x = s.rows[r.no], c = counted(r.no), rem = r3(r.total - c);
+    seq++; sub = r3(sub + c); subExp = r3(subExp + r.total);
+    html += '<tr' + (editNo === r.no ? ' class="hit"' : '') + '><td>' + seq + '</td>' +
+      '<td class="ctl">' + (rev ? (rem === 0 ? '✔' : '<span style="color:#b3261e">✖</span>') : '') + '</td>' +
+      '<td class="code">' + esc(r.pn) + '</td><td class="code">' + (esc(r.cs) || '—') + '</td><td class="code">' + (esc(r.bx) || '—') + '</td>' +
+      '<td class="desc">' + esc(r.desc) + '</td><td>' + (MAN() ? '—' : x.pk) + '</td><td>' + (MAN() ? '—' : x.per) + '</td><td><b>' + c + '</b>' + (MAN() ? ' ' + esc(r.unit) : '') + '</td>' +
+      '<td class="rem ' + (rev ? (rem > 0 ? 'pos' : rem < 0 ? 'neg' : '') : '') + '">' + (rev ? rem : '') + '</td>' +
+      '<td class="desc">' + esc(x.note || '') + (x.q ? ' <span data-q="' + esc(x.q) + '"></span>' : '') + '</td>' +
+      '<td>' + (open ? '<button type="button" class="sm" data-edit="' + r.no + '">ویرایش</button><button type="button" class="sm del" data-del="' + r.no + '">حذف</button>' : '') + '</td></tr>';
+    var next = list[i + 1];
+    if (!next || next.pn !== r.pn) {
+      html += '<tr class="sub"><td colspan="8" style="text-align:left">جمع <span class="code">' + esc(r.pn) + '</span></td><td>' + sub + '</td><td class="rem">' + (rev ? r3(subExp - sub) : '') + '</td><td colspan="2"></td></tr>';
+      sub = 0; subExp = 0;
+    }
+  });
+  $('gridBody').innerHTML = html || '<tr><td colspan="12" class="note">هنوز قطعه‌ای ثبت نشده است.</td></tr>';
+  document.querySelectorAll('[data-edit]').forEach(function (b) { b.addEventListener('click', function () { startEdit(Number(b.getAttribute('data-edit'))); }); });
+  document.querySelectorAll('[data-del]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var no = Number(b.getAttribute('data-del')), r = rows().filter(function (y) { return y.no === no; })[0];
+      if (!confirm('ردیف ' + r.pn + (boxLbl(r) ? ' — ' + boxLbl(r) : '') + ' حذف شود؟')) return;
+      delete MS().rows[no]; delete MS().recount[no]; save();
+      enqueue({ type: 'ROW', rowNo: no, del: true }); renderAll();
+    });
+  });
+}
+function resetEntry() {
+  cur = null; editNo = null;
+  $('ePart').value = ''; $('hits').innerHTML = ''; $('eDesc').innerHTML = '';
+  $('eBox').innerHTML = '<option value="">اول شماره فنی</option>'; $('eBox').disabled = true;
+  ['ePk', 'ePer', 'eNote'].forEach(function (k) { $(k).value = ''; $(k).disabled = true; });
+  $('eTot').value = ''; $('eAdd').disabled = true; $('eAdd').textContent = 'افزودن به جدول'; $('eCancel').classList.add('hidden');
+}
+var entryMethod = 'manual';
+function pickPart(pn, method) {
+  var g = uniqueParts().filter(function (x) { return x.pn === pn; })[0]; if (!g) return;
+  cur = g; entryMethod = method || 'manual'; $('ePart').value = g.pn; $('hits').innerHTML = '';
+  $('eDesc').innerHTML = '<span style="color:#17694a;font-weight:bold">✔ در لیست هست:</span> ' + esc(g.desc);
+  var s = MS();
+  $('eBox').innerHTML = (g.rows.length > 1 ? '<option value="">انتخاب کنید</option>' : '') + g.rows.map(function (r) {
+    return '<option value="' + r.no + '">' + (esc(boxLbl(r)) || 'بدون کیس') + (s.rows[r.no] && editNo !== r.no ? ' — قبلاً ثبت شده' : '') + '</option>';
+  }).join('');
+  $('eBox').disabled = false;
+  ['ePk', 'ePer', 'eNote'].forEach(function (k) { $(k).disabled = false; });
+  $('eAdd').disabled = false;
+  if (MAN()) { $('ePk').value = 1; $('ePer').previousElementSibling.textContent = 'مقدار (' + g.rows[0].unit + ')'; }
+  setTimeout(function () { (MAN() ? $('ePer') : (g.rows.length > 1 && editNo == null ? $('eBox') : $('ePk'))).focus(); }, 0);
+}
+function hitsFor(q) {
+  var qp = np(q), qf = nf(q);
+  return uniqueParts().map(function (g) {
+    var pn = np(g.pn), sc = 0;
+    if (qp) { if (pn === qp) sc = 100; else if (pn.indexOf(qp) === 0) sc = 80; else if (pn.slice(-qp.length) === qp) sc = 70; else if (pn.indexOf(qp) !== -1) sc = 60; }
+    if (qf && qf.split(' ').every(function (w) { return nf(g.desc).indexOf(w) !== -1; })) sc = Math.max(sc, 50);
+    return { g: g, s: sc };
+  }).filter(function (x) { return x.s > 0; }).sort(function (a, b) { return b.s - a.s; });
+}
+function hl(pn, q) {
+  var qp = np(q); if (!qp) return esc(pn);
+  var idx = [], s = ''; for (var i = 0; i < pn.length; i++) { var c = np(pn[i]); if (c) { s += c; idx.push(i); } }
+  var at = s.indexOf(qp); if (at < 0) return esc(pn);
+  var a = idx[at], b = idx[at + qp.length - 1] + 1;
+  return esc(pn.slice(0, a)) + '<mark>' + esc(pn.slice(a, b)) + '</mark>' + esc(pn.slice(b));
+}
+$('ePart').addEventListener('input', function () {
+  var q = this.value.trim();
+  if (cur && q !== cur.pn) { var keep = q, ed = editNo; resetEntry(); editNo = ed; $('ePart').value = keep; }
+  if (!q) { $('hits').innerHTML = ''; return; }
+  var h = hitsFor(q).slice(0, 8);      // پیشنهاد: فقط شماره فنی و شرح — بدون تعداد
+  $('hits').innerHTML = h.map(function (x) { return '<div data-pick="' + esc(x.g.pn) + '"><span class="code">' + hl(x.g.pn, q) + '</span> — ' + esc(x.g.desc) + '</div>'; }).join('');
+  document.querySelectorAll('[data-pick]').forEach(function (el) { el.addEventListener('click', function () { pickPart(el.getAttribute('data-pick'), 'manual'); }); });
+});
+$('ePart').addEventListener('keydown', function (e) {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  var q = this.value.trim(); if (!q) return;
+  var exact = uniqueParts().filter(function (g) { return np(g.pn) === np(q); })[0];
+  if (exact) { pickPart(exact.pn, 'scan'); return; }                // Enter با شماره‌ی کامل = معمولاً بارکدخوان
+  var h = hitsFor(q);
+  if (h.length === 1) { pickPart(h[0].g.pn, 'manual'); return; }
+  if (h.length > 1) { toast('چند قطعه با این متن هست — از فهرست انتخاب کنید.', 'warn'); return; }
+  var owner = null; Object.keys(P().others || {}).forEach(function (k) { if (np(k) === np(q)) owner = P().others[k]; });
+  toast(owner ? 'این شماره فنی سهم ماموریت دیگری است: ' + owner : 'این شماره فنی در لیست درخواست نیست — ثبت نمی‌شود.', 'bad');
+  this.select();
+});
+$('eBox').addEventListener('change', function () { if (this.value) $('ePk').focus(); });
+function updTot() { var a = num($('ePk').value), b = num($('ePer').value); $('eTot').value = (a != null && b != null) ? r3(a * b) : ''; }
+// چیدمان پنل ورود بر اساس نوع لیست
+function setEntryMode() {
+  var man = MAN();
+  [$('eBox'), $('ePk'), $('eTot')].forEach(function (el) { el.parentNode.classList.toggle('hidden', man); });
+  $('ePer').previousElementSibling.textContent = man ? 'مقدار' : 'تعداد در بسته';
+  $('ePer').setAttribute('inputmode', man ? 'decimal' : 'numeric');
+  $('ePer').setAttribute('step', man ? 'any' : '1');
+  $('ePer').setAttribute('min', man ? '0' : '1');
+}
+$('ePk').addEventListener('input', updTot); $('ePer').addEventListener('input', updTot);
+$('ePk').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); $('ePer').focus(); } });
+$('ePer').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); $('eNote').focus(); } });
+$('eNote').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); $('eAdd').click(); } });
+$('eCancel').addEventListener('click', function () { resetEntry(); renderGrid(); });
+$('eAdd').addEventListener('click', function () {
+  if (!cur) { toast('شماره فنی را وارد کنید.', 'bad'); return; }
+  var no = Number($('eBox').value), pk = num($('ePk').value), per = num($('ePer').value);
+  if (!no) { toast('کیس / کارتن را انتخاب کنید.', 'bad'); $('eBox').focus(); return; }
+  if (!(pk >= 1) || Math.floor(pk) !== pk) { toast('تعداد بسته را درست وارد کنید.', 'bad'); $('ePk').focus(); return; }
+  if (MAN() ? !(per > 0) : !(per >= 1)) { toast(MAN() ? 'مقدار را درست وارد کنید.' : 'تعداد در بسته را درست وارد کنید.', 'bad'); $('ePer').focus(); return; }
+  var s = MS(), r = rows().filter(function (y) { return y.no === no; })[0];
+  if (MAN() && r.unit === 'عدد' && Math.floor(per) !== per) { toast('واحد این قطعه «عدد» است؛ اعشار قبول نیست.', 'bad'); $('ePer').focus(); return; }
+  if (s.rows[no] && editNo !== no && !confirm((boxLbl(r) || r.pn) + ' قبلاً ثبت شده. با مقدار جدید جایگزین شود؟')) return;
+  if (editNo != null && editNo !== no) { delete s.rows[editNo]; enqueue({ type: 'ROW', rowNo: editNo, del: true }); }
+  var note = $('eNote').value.trim();
+  s.rows[no] = { pk: pk, per: per, note: note, method: entryMethod };
+  delete s.recount[no];
+  s.rows[no].q = enqueue({ type: 'ROW', rowNo: no, pk: pk, per: per, note: note, method: entryMethod });
+  save();
+  toast('ثبت شد: ' + r.pn + (MAN() ? ' — ' + per + ' ' + r.unit : ' — ' + boxLbl(r) + ' — ' + pk + ' × ' + per + ' = ' + r3(pk * per)), 'ok');
+  resetEntry(); renderAll(); $('ePart').focus();
+});
+function startEdit(no) {
+  var r = rows().filter(function (y) { return y.no === no; })[0], x = MS().rows[no];
+  resetEntry(); editNo = no; pickPart(r.pn, x.method);
+  $('eBox').value = String(no); $('ePk').value = x.pk; $('ePer').value = x.per; $('eNote').value = x.note || ''; updTot();
+  $('eAdd').textContent = 'ذخیره‌ی ویرایش'; $('eCancel').classList.remove('hidden');
+  renderGrid(); $('entryPanel').scrollIntoView({ block: 'center' });
+}
+/* QR (قابلیت جانبی) */
+$('qrShot').addEventListener('change', function (e) {
+  var f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
+  var url = URL.createObjectURL(f), img = new Image();
+  img.onload = function () {
+    var p = ('BarcodeDetector' in window) ? new BarcodeDetector({ formats: ['qr_code', 'code_128', 'code_39'] }).detect(img).then(function (r) { return r && r.length ? r[0].rawValue : null; }).catch(function () { return null; }) : Promise.resolve(null);
+    p.then(function (text) {
+      URL.revokeObjectURL(url);
+      if (!text) { toast('QR خوانده نشد. دستی وارد کنید.', 'warn'); return; }
+      var fields = text.split(/[;|,\s]+/).map(np).filter(Boolean), hit = null;
+      fields.some(function (fl) { hit = uniqueParts().filter(function (g) { return np(g.pn) === fl; })[0]; return !!hit; });
+      if (hit) { toast('از QR: ' + hit.pn, 'ok'); pickPart(hit.pn, 'qr'); } else toast('شماره فنیِ این لیست در QR پیدا نشد — ثبت نمی‌شود.', 'bad');
+    });
+  };
+  img.src = url;
+});
+
+/* ---------------- مقایسه، کسری، سند خروج، بستن ---------------- */
+function renderCompare() {
+  var rev = revealed(); $('cmpSection').classList.toggle('hidden', !rev); if (!rev) return;
+  var s = MS(), n = { ok: 0, short: 0, over: 0, none: 0 }, dis = closed() ? ' disabled' : '';
+  $('cmpBody').innerHTML = rows().map(function (r) {
+    var c1 = counted(r.no), rc = s.rcDone && c1 != null && c1 < r.total && (s.recount[r.no] || {}).c2 != null;
+    var c = rc ? finalOf(r) : c1, got = c == null ? 0 : c, rem = r3(r.total - got), st, cls = '';
+    if (c == null) { st = 'جمع نشده'; n.none++; cls = 'pos'; }
+    else if (rem === 0) { st = '✔ کامل'; n.ok++; }
+    else if (rem > 0) { st = 'کسری'; n.short++; cls = 'pos'; }
+    else { st = 'اضافه'; n.over++; cls = 'neg'; }
+    var x = s.rows[r.no] || {};
+    return '<tr><td>' + r.no + '</td><td class="code">' + esc(r.pn) + '</td><td class="code">' + boxCell(r) + '</td><td class="desc">' + esc(r.desc) + '</td>' +
+      '<td>' + r.total + '</td><td>' + (c == null ? '—' : '<b>' + c + '</b>' + (rc ? '<div class="note">شمارش اول: ' + c1 + '</div>' : '')) + '</td><td class="rem ' + cls + '">' + rem + '</td><td>' + st + '</td>' +
+      '<td>' + (rem < 0 ? '<input type="text" class="nt' + (x.overNote ? '' : ' err') + '" data-onote="' + r.no + '" value="' + esc(x.overNote || '') + '" placeholder="توضیح اجباری"' + dis + '>' : '') + '</td></tr>';
+  }).join('');
+  $('cmpSummary').innerHTML = '<div class="msg ' + (n.short + n.none + n.over ? 'warn' : 'ok') + '">کامل: ' + n.ok + ' — کسری: ' + n.short + ' — جمع نشده: ' + n.none + ' — اضافه: ' + n.over + '</div>';
+  document.querySelectorAll('[data-onote]').forEach(function (el) {
+    el.addEventListener('change', function () { MS().rows[el.getAttribute('data-onote')].overNote = el.value.trim(); save(); renderAll(); });
+  });
+}
+function shortRows() { return rows().filter(function (r) { var c = counted(r.no); return c == null || c < r.total; }); }
+// مقدار نهایی یک ردیف کسری = آخرین شمارش ثبت‌شده (سوم، وگرنه دوم، وگرنه اول)
+// شمارش دوم/سوم «کل موجودی فیزیکی» است و تحویل تکمیلی را هم در بر دارد؛ عدد تحویل تکمیلی فقط برای بایگانی ثبت می‌شود
+function finalOf(r) {
+  var c1 = counted(r.no) || 0, x = MS().recount[r.no] || {};
+  return r3(x.c3 != null ? x.c3 : (x.c2 != null ? x.c2 : c1));
+}
+function unresolvedRows() { return shortRows().filter(function (r) { return finalOf(r) < r.total; }); }
+function renderShort() {
+  var show = revealed() && shortRows().length > 0;
+  $('shortSection').classList.toggle('hidden', !show); if (!show) return;
+  var s = MS(), lockRc = closed() || !!s.rcDone, dis = lockRc ? ' disabled' : '';
+  $('custRep').value = s.custRep || ''; $('custRep').disabled = lockRc;
+  $('rcBtn').parentNode.classList.toggle('hidden', closed() || !!s.times.EXIT_DOC);
+  $('rcBtn').textContent = s.rcDone ? '✏️ ویرایش شمارش دوم' : 'ثبت شمارش دوم و مقدار نهایی';
+  $('rcBtn').className = s.rcDone ? 'sec' : '';
+  $('rcMsg').innerHTML = s.rcDone ? '<div class="msg ok">✔ شمارش دوم ثبت شد' + (s.rcAt ? ' (' + esc(s.rcAt) + ')' : '') + '. مقدار نهایی جایگزین شمارش اول شد و در «مقایسه» بالا دیده می‌شود.' +
+    (unresolvedRows().length ? ' — ' + unresolvedRows().length + ' ردیف هنوز کسری دارد و برای تأیید سرپرست می‌رود.' : ' — همه‌ی کسری‌ها برطرف شد.') + '</div>' : '';
+  $('custRep').onchange = function () { s.custRep = this.value.trim(); save(); renderAll(); };
+  $('shortBody').innerHTML = shortRows().map(function (r) {
+    var c1 = counted(r.no) || 0, x = s.recount[r.no] || {}, need3 = x.c2 != null && x.c2 !== c1;
+    return '<tr><td>' + r.no + '</td><td class="code">' + esc(r.pn) + '</td><td class="code">' + boxCell(r) + '</td>' +
+      '<td>' + r.total + '</td><td>' + c1 + '</td><td class="rem pos">' + r3(r.total - c1) + '</td>' +
+      '<td><input type="number" step="any" inputmode="' + (MAN() ? 'decimal' : 'numeric') + '" data-c2="' + r.no + '" value="' + (x.c2 == null ? '' : x.c2) + '"' + dis + '></td>' +
+      '<td>' + (need3 ? '<input type="number" step="any" inputmode="' + (MAN() ? 'decimal' : 'numeric') + '" data-c3="' + r.no + '" value="' + (x.c3 == null ? '' : x.c3) + '"' + dis + '>' : '—') + '</td>' +
+      '<td><input type="number" step="any" min="0" inputmode="' + (MAN() ? 'decimal' : 'numeric') + '" data-sp="' + r.no + '" value="' + (x.sp ? x.sp : '') + '" placeholder="0"' + dis + '></td>' +
+      (function () { var rem = r3(r.total - finalOf(r)); return rem > 0 ? '<td class="rem pos">' + rem + '</td>' : '<td style="color:#17694a;font-weight:bold">✔ برطرف شد</td>'; })() +
+      '<td>' + (finalOf(r) >= r.total ? '—' : '<select data-rs="' + r.no + '" style="min-width:150px"' + dis + '><option value="">انتخاب کنید</option>' +
+      REASONS.map(function (t) { return '<option' + (x.reason === t ? ' selected' : '') + '>' + t + '</option>'; }).join('') + '</select>') + '</td></tr>';
+  }).join('');
+  function rc(no) { return s.recount[no] || (s.recount[no] = {}); }
+  document.querySelectorAll('[data-c2]').forEach(function (el) { el.addEventListener('change', function () { var o = rc(el.getAttribute('data-c2')); o.c2 = num(el.value); delete o.c3; save(); renderAll(); }); });
+  document.querySelectorAll('[data-c3]').forEach(function (el) { el.addEventListener('change', function () { rc(el.getAttribute('data-c3')).c3 = num(el.value); save(); renderAll(); }); });
+  document.querySelectorAll('[data-rs]').forEach(function (el) { el.addEventListener('change', function () { rc(el.getAttribute('data-rs')).reason = el.value; save(); renderAll(); }); });
+  document.querySelectorAll('[data-sp]').forEach(function (el) { el.addEventListener('change', function () { var v = num(el.value); rc(el.getAttribute('data-sp')).sp = v > 0 ? v : 0; save(); renderAll(); }); });
+}
+// ثبت شمارش دوم: کنترل کامل، قفل ردیف‌ها و ارسال مقدار نهایی به سرور (جایگزین شمارش اول)
+$('rcBtn').addEventListener('click', function () {
+  var s = MS();
+  if (closed() || s.times.EXIT_DOC) return;
+  if (s.rcDone) { s.rcDone = false; save(); renderAll(); toast('شمارش دوم برای ویرایش باز شد؛ بعد از اصلاح دوباره «ثبت» بزنید.', 'warn'); return; }
+  var errs = [];
+  if (!s.custRep) errs.push('نام نماینده‌ی انبار مشتری');
+  shortRows().forEach(function (r) {
+    var c1 = counted(r.no) || 0, x = s.recount[r.no] || {};
+    if (x.c2 == null) errs.push('شمارش دوم ردیف ' + r.no + ' (' + r.pn + ')');
+    else if (x.c2 !== c1 && x.c3 == null) errs.push('شمارش سوم ردیف ' + r.no + ' (شمارش دوم با اول فرق دارد)');
+    if (finalOf(r) < r.total && !x.reason) errs.push('علت کسری ردیف ' + r.no);
+  });
+  if (errs.length) { $('rcMsg').innerHTML = '<div class="msg bad">کامل شود:<br>• ' + errs.map(esc).join('<br>• ') + '</div>'; return; }
+  var list = shortRows().map(function (r) { return r.pn + ': ' + (counted(r.no) || 0) + ' ← ' + finalOf(r); }).join('\n');
+  if (!confirm('مقدار نهایی این ردیف‌ها جایگزین شمارش اول شود؟\n' + list)) return;
+  var rows = {};
+  shortRows().forEach(function (r) { var x = s.recount[r.no] || {}; rows[r.no] = { c2: x.c2, c3: x.c3 == null ? null : x.c3, sp: x.sp || 0 }; });
+  s.rcDone = true; s.rcAt = fmtTime(nowSrv());
+  enqueue({ type: 'RECOUNT', rows: rows, customerRep: s.custRep });
+  save(); renderAll();
+  toast('شمارش دوم ثبت شد.', 'ok');
+});
+function missing() {
+  var s = MS(), errs = [];
+  if (!s.times.COLLECTION_END) errs.push('ثبت زمان «پایان جمع‌آوری»');
+  rows().forEach(function (r) { var c = counted(r.no), x = s.rows[r.no] || {}; if (c != null && c > r.total && !x.overNote) errs.push('توضیح اضافه برای ردیف ' + r.no); });
+  if (s.times.COLLECTION_END && shortRows().length && !s.custRep) errs.push('نام نماینده‌ی انبار مشتری');
+  if (s.times.COLLECTION_END && shortRows().length && !s.rcDone) errs.push('زدن دکمه‌ی «ثبت شمارش دوم و مقدار نهایی»');
+  shortRows().forEach(function (r) {
+    var c1 = counted(r.no) || 0, x = s.recount[r.no] || {};
+    if (x.c2 == null) errs.push('شمارش دوم ردیف ' + r.no);
+    else if (x.c2 !== c1 && x.c3 == null) errs.push('شمارش سوم ردیف ' + r.no);
+    if (finalOf(r) < r.total && !x.reason) errs.push('علت کسری ردیف ' + r.no);
+  });
+  return errs;
+}
+function exitReady() {
+  var s = MS(), e = missing();
+  if (e.length) return { ok: false, msg: 'قبل از سند خروج کامل شود: ' + e[0] + (e.length > 1 ? ' و ' + (e.length - 1) + ' مورد دیگر' : '') };
+  if (!s.exitNo) return { ok: false, msg: 'شماره‌ی سند خروج را وارد کنید.' };
+  if (!s.exitOk) return { ok: false, msg: 'تطابق سند خروج با جدول را تأیید کنید.' };
+  return { ok: true };
+}
+function renderExit() {
+  var s = MS(), n = unresolvedRows().length, dis = closed() || !!s.times.EXIT_DOC;
+  $('exitOkText').textContent = 'سند خروج دقیقاً با جدول جمع‌آوری بالا' + (n && revealed() ? '، همراه با ' + n + ' ردیف کسری،' : '') + ' صادر شده است.';
+  $('exitNo').disabled = dis; $('exitOk').disabled = dis;
+  $('closeBtn').disabled = closed() || !revealed();
+  $('closeBtn').textContent = closed() ? (s.status === 'CLOSED' ? '✓ ثبت نهایی شد' : '✓ ثبت نهایی شد — کسری در انتظار تأیید سرپرست') : 'ثبت نهایی (بستن ماموریت) — با ثبت زمان «دریافت سند خروج»';
+}
+$('exitNo').addEventListener('change', function () { MS().exitNo = this.value.trim(); save(); renderTimes(); });
+$('exitOk').addEventListener('change', function () { MS().exitOk = this.checked; save(); renderTimes(); });
+
+// «ثبت نهایی» همان ثبت زمان «دریافت سند خروج» است؛ بعد از ثبت آن زمان، ماموریت بسته می‌شود
+$('closeBtn').addEventListener('click', function () {
+  var errs = missing(), r = exitReady();
+  if (!r.ok && !errs.length) errs.push(r.msg);
+  if (errs.length) { $('finalMsg').innerHTML = '<div class="msg bad">برای ثبت نهایی این موارد کامل شود:<br>• ' + errs.map(esc).join('<br>• ') + '</div>'; toast('هنوز قابل ثبت نهایی نیست.', 'bad'); return; }
+  if (!confirm('ماموریت ثبت نهایی شود؟ بعد از آن جدول و کسری‌ها قابل تغییر نیست.')) return;
+  $('finalMsg').innerHTML = '';
+  var idx = TIMES.map(function (t) { return t.key; }).indexOf('EXIT_DOC');
+  if (MS().times.EXIT_DOC) doClose(); else recordTime(idx, document.querySelector('[data-t="' + idx + '"]'));
+});
+function doClose() {
+  var s = MS();
+  if (closed()) return;
+  var recount = {}, overNotes = {};
+  shortRows().forEach(function (r) { var x = s.recount[r.no] || {}; recount[r.no] = { c2: x.c2, c3: x.c3 == null ? null : x.c3, sp: x.sp || 0, reason: finalOf(r) < r.total ? x.reason : '' }; });
+  rows().forEach(function (r) { var x = s.rows[r.no]; if (x && x.overNote) overNotes[r.no] = x.overNote; });
+  s.status = unresolvedRows().length ? 'SHORTAGE_PENDING' : 'CLOSED';
+  enqueue({ type: 'CLOSE', exitDocNo: s.exitNo, recount: recount, overNotes: overNotes, customerRep: s.custRep || '', mismatchNote: s.info.description || '' });
+  save();
+  toast(s.status === 'CLOSED' ? 'ماموریت ثبت نهایی شد.' : 'ثبت نهایی شد — کسری برای تأیید سرپرست ارسال می‌شود.', s.status === 'CLOSED' ? 'ok' : 'warn');
+  renderAll();
+}
+</script>
+</body>
+</html>
