@@ -1,0 +1,2939 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>فرم ماموریت رانندگان</title>
+  <meta name="theme-color" content="#fbf7ec">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <script src="config.js"></script>
+  <script src="api.js"></script>
+  <script>
+    /* برنامه‌ی میدانی: فرم رانندگان از طریق درگاه هاب ارسال با سرور حرف می‌زند؛ بدون ورود ← صفحه‌ی خانه */
+    (function () {
+      var s = KPT.session();
+      if (!s || !s.snd) { location.replace('index.html'); return; }
+      try { localStorage.setItem('kpt_hub_user', JSON.stringify({ success: true, userCode: s.user.userCode, fullName: s.user.fullName, role: s.user.jobTitle, driverID: s.snd.driverID, pages: s.snd.pages })); } catch (e) {}
+      window.google = { script: { run: KPT.runner(KPT_CONFIG.sndApi, { token: function () { var x = KPT.session(); return x && x.snd ? x.snd.token : ''; }, cache: ['getReference'] }) } };
+    })();
+  </script>
+  <style>.homelink{position:fixed;top:8px;left:8px;z-index:40;background:#4f7ca8;color:#fff;text-decoration:none;border-radius:99px;padding:4px 12px;font:12px Tahoma,Arial,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.2)}@media print{.homelink{display:none}}</style>
+
+  <!-- فایل CSS مشترک -->
+  <style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    direction:rtl;
+    font-family:Arial, sans-serif;
+    background:#f4f6f8;
+    color:#222;
+    padding:20px;
+}
+
+.container{
+    width:100%;
+    max-width:1200px;
+    margin:auto;
+    background:#ffffff;
+    border:1px solid #d8d8d8;
+    border-radius:6px;
+    padding:25px;
+}
+
+.header{
+    text-align:center;
+    border-bottom:2px solid #4f7ca8;
+    padding-bottom:15px;
+    margin-bottom:25px;
+}
+
+.header h1{
+    color:#4f7ca8;
+    font-size:28px;
+    margin-bottom:8px;
+}
+
+.header h2{
+    color:#666;
+    font-size:16px;
+    font-weight:normal;
+}
+
+.main-info,
+.time-section,
+.engine-section,
+.description-section,
+.shipment-info,
+.barcode-section,
+.signature-section,
+.button-section{
+    margin-top:25px;
+}
+
+.main-info h3,
+.time-section h3,
+.engine-section h3,
+.description-section h3{
+    color:#4f7ca8;
+    margin-bottom:12px;
+    padding-bottom:6px;
+    border-bottom:1px solid #dddddd;
+    font-size:18px;
+}
+
+.form-row{
+    display:flex;
+    gap:15px;
+    margin-bottom:15px;
+    flex-wrap:wrap;
+}
+
+.form-group{
+    flex:1;
+    min-width:220px;
+}
+
+.form-group.small{
+    max-width:150px;
+}
+
+label{
+    display:block;
+    margin-bottom:6px;
+    font-size:13px;
+    font-weight:bold;
+}
+
+input,
+select,
+textarea{
+    width:100%;
+    padding:8px 10px;
+    border:1px solid #cfcfcf;
+    border-radius:4px;
+    background:#fff;
+    font-size:13px;
+    transition:.2s;
+}
+
+input:focus,
+select:focus,
+textarea:focus{
+    outline:none;
+    border-color:#4f7ca8;
+    box-shadow:0 0 3px rgba(79,124,168,.25);
+}
+
+.time-box{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.time-box span{
+    min-width:70px;
+    color:#4f7ca8;
+    font-weight:bold;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:10px;
+    font-size:13px;
+}
+
+thead th{
+    background:#4f7ca8;
+    color:#fff;
+    padding:10px;
+    border:1px solid #d8d8d8;
+    font-weight:bold;
+}
+
+tbody td{
+    border:1px solid #d8d8d8;
+    padding:6px;
+    text-align:center;
+}
+
+tbody td input{
+    border:none;
+    background:transparent;
+    text-align:center;
+    padding:6px;
+}
+
+tbody tr:nth-child(even){
+    background:#fafafa;
+}
+
+tbody tr:hover{
+    background:#eef6ff;
+}
+
+textarea{
+    resize:vertical;
+    min-height:100px;
+}
+
+.shipment-info{
+    display:flex;
+    gap:20px;
+    flex-wrap:wrap;
+}
+
+.info-box{
+    flex:1;
+    min-width:250px;
+    border:1px solid #d8d8d8;
+    border-radius:4px;
+    padding:12px;
+    background:#fafafa;
+}
+
+.info-box label{
+    color:#666;
+    margin-bottom:8px;
+}
+
+.info-box span{
+    color:#4f7ca8;
+    font-size:15px;
+    font-weight:bold;
+}
+
+.barcode-section{
+    display:flex;
+    gap:20px;
+    justify-content:space-between;
+    flex-wrap:wrap;
+}
+
+.barcode-box{
+    flex:1;
+    min-width:250px;
+    border:1px solid #d8d8d8;
+    border-radius:4px;
+    padding:15px;
+    text-align:center;
+    background:#fff;
+}
+
+.barcode-box label{
+    margin-bottom:10px;
+    color:#555;
+}
+
+.barcode-box div{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:130px;
+}
+
+.signature-section{
+    display:flex;
+    gap:25px;
+    justify-content:space-between;
+}
+
+.signature-box{
+    flex:1;
+    text-align:center;
+    padding-top:20px;
+}
+
+.signature-box label{
+    margin-bottom:30px;
+    display:block;
+}
+
+.button-section{
+    display:flex;
+    justify-content:flex-end;
+    gap:12px;
+}
+
+button{
+    background:#4f7ca8;
+    color:#fff;
+    border:none;
+    border-radius:4px;
+    padding:10px 22px;
+    font-size:14px;
+    cursor:pointer;
+    transition:.2s;
+}
+
+button:hover{
+    background:#3e6890;
+}
+
+button:disabled{
+    background:#bfbfbf;
+    cursor:not-allowed;
+}
+
+.note{
+    text-align:center;
+    color:#666;
+    font-size:12px;
+    margin-top:15px;
+}
+
+.scanner-modal{
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,.75);
+    z-index:999;
+    align-items:center;
+    justify-content:center;
+}
+
+.scanner-modal.open{
+    display:flex;
+}
+
+.scanner-box{
+    background:#fff;
+    border-radius:8px;
+    padding:15px;
+    width:90%;
+    max-width:380px;
+    text-align:center;
+}
+
+.scanner-box #qrReader{
+    width:100%;
+    margin-bottom:12px;
+}
+
+#shipmentTableBody button{
+    background:#c0564b;
+    padding:4px 10px;
+    font-size:12px;
+}
+
+#shipmentTableBody button:hover{
+    background:#a4483e;
+}
+
+/* جدول مشخصات موتور/قطعه برگشتی (فرم مجوز برگشت) - ستون نام محصول جا کم داره و متن دیده نمی‌شد */
+#returnDetailTable{
+    table-layout:fixed;
+}
+
+#returnDetailTable th:nth-child(2),
+#returnDetailTable td:nth-child(2){
+    min-width:220px;
+    width:220px;
+}
+
+#returnDetailTable td:nth-child(2) select{
+    width:100%;
+    text-overflow:ellipsis;
+}
+
+@media screen{
+
+.mobile-view body{
+        padding:6px;
+        background:#f4f6f8;
+    }
+
+.mobile-view .container{
+        width:100%;
+        padding:12px;
+        border-radius:10px;
+        border:none;
+    }
+
+.mobile-view .header{
+        margin-bottom:15px;
+        padding-bottom:10px;
+    }
+
+.mobile-view .header h1{
+        font-size:21px;
+    }
+
+.mobile-view .header h2{
+        font-size:14px;
+    }
+
+.mobile-view .form-group,
+.mobile-view .form-group.small{
+        width:100%;
+        max-width:none;
+        min-width:100%;
+    }
+
+.mobile-view label{
+        font-size:15px;
+        margin-bottom:6px;
+    }
+
+.mobile-view input,
+.mobile-view select,
+.mobile-view textarea{
+        height:48px;
+        font-size:16px;
+        border-radius:8px;
+    }
+
+.mobile-view .shipment-info{
+        display:flex;
+        flex-direction:column;
+        gap:10px;
+    }
+
+.mobile-view .info-box{
+        min-width:100%;
+        padding:12px;
+    }
+
+.mobile-view .time-box{
+        display:flex;
+        flex-direction:row;
+        align-items:center;
+        justify-content:space-between;
+        gap:8px;
+    }
+
+.mobile-view .time-box span{
+        flex:1;
+        min-height:45px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        background:#f5f8fb;
+        border-radius:6px;
+    }
+
+.mobile-view .time-box button{
+        width:auto;
+        min-width:110px;
+    }
+
+.mobile-view .engine-section{
+        overflow-x:auto;
+        -webkit-overflow-scrolling:touch;
+    }
+
+.mobile-view #engineTable{
+        min-width:520px;
+        font-size:14px;
+    }
+
+.mobile-view #engineTable th{
+        padding:10px 6px;
+        white-space:nowrap;
+    }
+
+.mobile-view #engineTable td{
+        padding:5px;
+    }
+
+.mobile-view #engineTable input{
+        height:42px;
+        font-size:15px;
+        padding:5px;
+    }
+
+/* جدول محموله‌های فرم ماموریت رانندگان - همان الگوی جدول موتورها */
+
+.mobile-view .engine-section{
+        overflow-x:auto;
+        -webkit-overflow-scrolling:touch;
+    }
+
+.mobile-view #shipmentTable{
+        min-width:480px;
+        font-size:14px;
+    }
+
+.mobile-view #shipmentTable th{
+        padding:10px 6px;
+        white-space:nowrap;
+    }
+
+.mobile-view #shipmentTable td{
+        padding:5px;
+    }
+
+.mobile-view #shipmentTable input{
+        height:42px;
+        font-size:15px;
+        padding:5px;
+    }
+
+/* جدول مشخصات موتور/قطعه برگشتی در موبایل - ستون نام محصول باید عریض‌تر بماند */
+.mobile-view #returnDetailTable{
+        min-width:900px;
+        font-size:14px;
+    }
+
+.mobile-view #returnDetailTable th:nth-child(2),
+.mobile-view #returnDetailTable td:nth-child(2){
+        min-width:200px;
+        width:200px;
+    }
+
+.mobile-view #returnDetailTable th{
+        padding:10px 6px;
+        white-space:nowrap;
+    }
+
+.mobile-view #returnDetailTable td{
+        padding:5px;
+    }
+
+.mobile-view #returnDetailTable input,
+.mobile-view #returnDetailTable select{
+        height:42px;
+        font-size:15px;
+        padding:5px;
+    }
+
+.mobile-view .scan-actions > div{
+        flex-direction:row;
+    }
+
+.mobile-view .scan-actions button{
+        flex:1;
+        height:48px;
+        font-size:15px;
+    }
+
+.mobile-view textarea{
+        min-height:130px;
+    }
+
+.mobile-view .barcode-section{
+        flex-direction:column;
+        gap:12px;
+    }
+
+.mobile-view .barcode-box{
+        width:100%;
+        min-width:100%;
+    }
+
+.mobile-view .barcode-box div{
+        min-height:150px;
+    }
+
+.mobile-view .signature-section{
+        flex-direction:column;
+        gap:10px;
+    }
+
+.mobile-view .signature-box{
+        padding:10px;
+    }
+
+.mobile-view .button-section{
+        flex-direction:column;
+        gap:10px;
+    }
+
+.mobile-view .button-section button{
+        width:100%;
+        height:52px;
+        font-size:17px;
+    }
+
+}
+
+@page{
+    size:A4;
+    margin:5mm;
+}
+
+@media print{
+
+    body{
+        background:#fff;
+        padding:0;
+        margin:0;
+        font-size:8px;
+    }
+
+    .container{
+        width:100%;
+        margin:0;
+        padding:0;
+        border:none;
+        box-shadow:none;
+    }
+
+    hr{
+        margin:1px 0;
+        border:none;
+        border-top:1px solid #ccc;
+    }
+
+    .header{
+        margin-bottom:2px;
+        padding-bottom:2px;
+    }
+
+    .header h1{
+        font-size:12px;
+        margin:1px 0;
+    }
+
+    .header h2{
+        font-size:8px;
+    }
+
+    .main-info,
+    .time-section,
+    .description-section,
+    .shipment-info,
+    .barcode-section,
+    .signature-section{
+        page-break-inside:avoid;
+        margin-top:2px;
+    }
+
+    .engine-section{
+        margin-top:2px;
+    }
+
+    .engine-section table,
+    .engine-section thead,
+    .engine-section tr{
+        page-break-inside:avoid;
+    }
+
+    .main-info h3,
+    .time-section h3,
+    .engine-section h3,
+    .description-section h3{
+        font-size:9px;
+        margin-bottom:1px;
+        padding-bottom:1px;
+    }
+
+    .form-row{
+        gap:3px;
+        margin-bottom:2px;
+    }
+
+    .form-group label{
+        font-size:7px;
+        margin-bottom:1px;
+    }
+
+    input,
+    select,
+    textarea{
+        font-size:7px;
+        height:12px;
+        padding:1px;
+    }
+
+    textarea{
+        height:10px;
+        min-height:10px;
+    }
+
+    table{
+        font-size:6px;
+        margin-top:1px;
+        width:100%;
+        border-collapse:collapse;
+    }
+
+    th,
+    td{
+        padding:0px 1px;
+        height:6px;
+        line-height:6px;
+    }
+
+    .button-section{
+        display:none !important;
+    }
+
+    button{
+        display:none !important;
+    }
+
+    .no-print,
+    .scanner-modal{
+        display:none !important;
+    }
+
+    .note{
+        font-size:6px;
+        margin-top:1px;
+    }
+
+    .shipment-info{
+        gap:3px;
+    }
+
+    .info-box{
+        padding:1px;
+    }
+
+    .info-box label{
+        font-size:6px;
+        margin-bottom:1px;
+    }
+
+    .info-box span{
+        font-size:8px;
+    }
+
+    .barcode-section{
+        display:table;
+        width:100%;
+        table-layout:fixed;
+        border-spacing:3px;
+    }
+
+    .barcode-box{
+        display:table-cell;
+        width:50%;
+        vertical-align:top;
+        border:1px solid #ccc;
+        padding:1px;
+    }
+
+    .barcode-box label{
+        font-size:6px;
+        margin-bottom:1px;
+    }
+
+    .barcode-box div{
+        min-height:16mm;
+        max-height:16mm;
+    }
+
+    .barcode-box img,
+    .barcode-box canvas,
+    .barcode-box svg{
+        max-height:16mm;
+        max-width:16mm;
+    }
+
+    .signature-section{
+        gap:3px;
+    }
+
+    .signature-box{
+        padding-top:1px;
+    }
+
+    .signature-box label{
+        font-size:7px;
+        margin-bottom:2px;
+    }
+
+    .signature-box br{
+        display:none;
+    }
+
+}
+</style>
+
+  <!-- کتابخانه اسکن بارکد/QR -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+</head>
+
+<body>
+<a class="homelink" href="index.html">🏠 خانه</a>
+<script>
+if (window.screen.width <= 725) {
+  document.body.classList.add('mobile-view');
+}
+</script>
+
+<div class="container">
+  <form id="missionForm">
+
+  <div class="header">
+    <h1>فرم ماموریت رانندگان</h1>
+    <h2>شرکت قوای محرکه کرمان خودرو</h2>
+  </div>
+
+  <div class="main-info">
+
+      <div class="form-row">
+          <div class="form-group">
+              <label for="missionType">نوع ماموریت</label>
+              <select id="missionType">
+                  <option>انتخاب کنید</option>
+              </select>
+          </div>
+      </div>
+
+  </div>
+
+  <div class="engine-section" id="shipmentSection">
+
+    <h3>محموله‌های ماموریت</h3>
+
+    <div class="form-row no-print">
+        <div class="form-group">
+            <label for="scanShipmentID">شماره محموله (اسکن بارکد یا وارد کردن دستی)</label>
+            <input type="text" id="scanShipmentID" placeholder="مثال: KPT/PRD-2026-00012">
+        </div>
+        <div class="form-group small scan-actions">
+            <label>&nbsp;</label>
+            <div style="display:flex; gap:8px;">
+                <button type="button" id="scanBtn">اسکن بارکد</button>
+                <input type="file" id="scanFileInput" accept="image/*" capture="environment" style="display:none">
+                <button type="button" id="addShipmentBtn">افزودن</button>
+            </div>
+        </div>
+    </div>
+
+    <table id="shipmentTable">
+      <thead>
+        <tr>
+          <th>ردیف</th>
+          <th>شماره محموله</th>
+          <th>محصول</th>
+          <th>تعداد</th>
+          <th class="no-print"></th>
+        </tr>
+      </thead>
+      <tbody id="shipmentTableBody"></tbody>
+    </table>
+  </div>
+  <div class="main-info" id="transferSection" style="display:none;">
+    <h3>محصول انتقالی</h3>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="transferProductSelect">نام محصول</label>
+        <select id="transferProductSelect">
+          <option>انتخاب کنید</option>
+        </select>
+      </div>
+      <div class="form-group small">
+        <label for="transferQuantityInput">تعداد (اختیاری)</label>
+        <input type="number" id="transferQuantityInput" min="0">
+      </div>
+    </div>
+  </div>
+  
+  <div id="scanProcessingModal" class="scanner-modal">
+    <div class="scanner-box">
+      <p>در حال خواندن بارکد از عکس...</p>
+    </div>
+  </div>
+
+  <canvas id="scanCanvas" style="display:none;"></canvas>
+
+  <div class="main-info">
+
+      <div class="form-row">
+          <div class="form-group">
+              <label for="date">تاریخ</label>
+              <input type="date" id="date">
+          </div>
+          <div class="form-group">
+              <label for="shift">شیفت</label>
+              <select id="shift">
+                  <option>انتخاب کنید</option>
+              </select>
+          </div>
+      </div>
+
+      <div class="form-row">
+          <div class="form-group">
+              <label for="origin">مبدأ</label>
+              <select id="origin">
+                  <option>انتخاب کنید</option>
+              </select>
+          </div>
+          <div class="form-group">
+              <label for="destination">مقصد</label>
+              <select id="destination">
+                  <option>انتخاب کنید</option>
+              </select>
+          </div>
+      </div>
+
+      <div class="form-row">
+          <div class="form-group">
+              <label for="driver">راننده</label>
+              <select id="driver">
+                  <option>انتخاب کنید</option>
+              </select>
+          </div>
+          <div class="form-group">
+              <label for="vehicle">خودرو</label>
+              <select id="vehicle">
+                  <option>انتخاب کنید</option>
+              </select>
+          </div>
+      </div>
+
+      <div class="form-row">
+          <div class="form-group small">
+              <label for="startKM">کیلومتر شروع</label>
+              <input type="number" id="startKM" min="0">
+          </div>
+      </div>
+
+  </div>
+
+  <!-- زمان‌ها -->
+
+  <div class="time-section">
+
+    <h3>زمان‌ها</h3>
+
+    <div class="form-row">
+
+        <div class="form-group">
+            <label>ساعت اعزام</label>
+            <div class="time-box">
+                <span id="dispatchTime"></span>
+                <button type="button" id="dispatchTimeBtn" onclick="setServerTime('dispatchTime')">ثبت زمان</button>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>ساعت رسیدن</label>
+            <div class="time-box">
+                <span id="arrivalTime"></span>
+                <button type="button" id="arrivalTimeBtn" onclick="setServerTime('arrivalTime')">ثبت زمان</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="form-row" id="unloadingRow" style="display:none;">
+        <div class="form-group">
+            <label>ساعت شروع تخلیه</label>
+            <div class="time-box">
+                <span id="unloadingStartTime"></span>
+                <button type="button" id="unloadingStartTimeBtn" onclick="setServerTime('unloadingStartTime')">ثبت زمان</button>
+            </div>
+        </div>
+    </div>
+
+  </div>
+
+  <!-- سوال پالت خالی -->
+
+  <div class="main-info" id="palletQuestionSection" style="display:none;">
+    <h3>پالت خالی جهت عودت</h3>
+    <div class="form-row">
+      <div class="form-group small">
+        <label for="hasPalletReturn">آیا پالت خالی جهت عودت وجود دارد؟</label>
+        <select id="hasPalletReturn">
+          <option value="no">خیر</option>
+          <option value="yes">بله</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  
+    <div class="form-row" id="palletLoadingRow" style="display:none;">
+        <div class="form-group">
+            <label>ساعت شروع بارگیری پالت خالی</label>
+            <div class="time-box">
+                <span id="palletLoadingStartTime"></span>
+                <button type="button" id="palletLoadingStartTimeBtn" onclick="recordPalletLoadingStartTime()">ثبت زمان</button>
+            </div>
+        </div>
+    </div>
+
+  <!-- تعداد پالت خالی -->
+
+  <div class="main-info" id="palletCountSection" style="display:none;">
+    <h3>تعداد پالت خالی</h3>
+    <div class="form-row">
+      <div class="form-group small">
+        <label for="palletCount">تعداد پالت خالی</label>
+        <input type="number" id="palletCount" min="1">
+      </div>
+    </div>
+  </div>
+
+  <!-- جدول شماره پالت‌های خالی -->
+
+  <div class="engine-section" id="palletNumbersSection" style="display:none;">
+      <h3>شماره پالت‌های خالی</h3>
+      <table id="palletTable">
+        <thead>
+          <tr><th>ردیف</th><th>شماره پالت</th></tr>
+        </thead>
+        <tbody id="palletTableBody"></tbody>
+      </table>
+  </div>
+
+  <!-- ادامه زمان‌ها -->
+
+  <div class="time-section">
+
+
+    <div class="form-row" id="returnRow" style="display:none;">
+        <div class="form-group">
+            <label>ساعت خروج از سایت</label>
+            <div class="time-box">
+                <span id="returnTime"></span>
+                <button type="button" id="returnTimeBtn" onclick="setServerTime('returnTime')">ثبت زمان</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-row" id="warehouseRow" style="display:none;">
+        <div class="form-group">
+            <label>ساعت ورود به انبار</label>
+            <div class="time-box">
+                <span id="warehouseArrivalTime"></span>
+                <button type="button" id="warehouseArrivalTimeBtn" onclick="setServerTime('warehouseArrivalTime')">ثبت زمان</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group small">
+            <label for="endKM">کیلومتر پایان</label>
+            <input type="number" id="endKM" min="0">
+        </div>
+        <div class="form-group">
+            <label for="delayReason">علت تاخیر (در صورت وجود)</label>
+            <select id="delayReason">
+                <option value="">ندارد</option>
+            </select>
+        </div>
+    </div>
+
+  </div>
+
+  <div class="description-section">
+      <h3>توضیحات</h3>
+      <textarea id="notes" rows="4" placeholder="در صورت نیاز توضیحات اینجا ثبت شود (مثلاً برای انتقال داخلی: نام قطعه و تعداد)..."></textarea>
+  </div>
+
+  <hr>
+
+  <div class="shipment-info">
+      <div class="info-box">
+          <label>شناسه ماموریت (MissionID) :</label>
+          <span id="missionID">در انتظار ثبت...</span>
+      </div>
+  </div>
+
+  <hr>
+
+  <div class="signature-section">
+      <div class="signature-box">
+          <label>امضاء راننده</label>
+          <br><br><br>
+          ______________________
+      </div>
+      <div class="signature-box">
+          <label>تایید کننده</label>
+          <br><br><br>
+          ______________________
+      </div>
+  </div>
+
+  <hr>
+
+  <div class="button-section">
+      <button type="submit" id="saveBtn">ثبت نهایی</button>
+      <button type="button" id="printBtn" disabled>چاپ فرم</button>
+      <button type="button" id="editToggleBtn">ویرایش ماموریت قبلی</button>
+      <button type="button" id="recoverDraftToggleBtn">ادامه ماموریت ناتمام</button>
+  </div>
+
+  <div class="edit-lookup" id="editLookupBox" style="display:none; margin-top:15px;">
+      <label>شماره ماموریت (MissionID) را وارد کنید</label>
+      <div style="display:flex; gap:10px;">
+          <input type="text" id="editRecordID" placeholder="مثال: MSN000012 یا KPT/PRD-2026-00012">
+          <button type="button" id="loadEditBtn">بارگذاری برای ویرایش</button>
+      </div>
+  </div>
+  <div class="edit-lookup" id="recoverDraftBox" style="display:none; margin-top:15px;">
+    <label>شماره محموله یا شناسه پیش‌نویس (TMP...) را وارد کنید</label>
+    <div style="display:flex; gap:10px;">
+        <input type="text" id="recoverDraftInput" placeholder="مثال: KPT/J4-1405-00023 یا TMP1787...">
+        <button type="button" id="loadRecoverDraftBtn">بازیابی</button>
+    </div>
+</div>
+
+  <p class="note">
+      شماره محموله را با دوربین اسکن کنید یا دستی وارد کرده و «افزودن» را بزنید تا اطلاعات آن به‌صورت خودکار از فرم آماده‌سازی محموله منتقل شود.<br>
+      زمان‌های رسیدن، شروع تخلیه، برگشت و کیلومتر پایان را می‌توانید بعداً از طریق «ویرایش ماموریت قبلی» تکمیل کنید.
+  </p>
+
+  </form>
+
+</div>
+
+<script>
+window.addEventListener('pageshow', function (event) {
+  if (event.persisted) {
+    window.location.reload();
+  }
+});
+
+window.onload = function () {
+
+  loadDropdown("shift", "Shift", "ShiftID", "ShiftName");
+  loadDropdown("missionType", "MissionType", "MissionTypeID", "MissionTypeName");
+  loadDropdown("driver", "Driver", "DriverID", "FullName");
+  loadDropdown("vehicle", "Vehicle", "VehicleID", "PlateNo");
+  loadDropdown("origin", "Destination", "DestinationID", "DestinationName");
+  loadDropdown("destination", "Destination", "DestinationID", "DestinationName");
+  loadDropdown("delayReason", "DelayReason", "DelayReasonID", "DelayReasonName");
+  loadDropdown("transferProductSelect", "Product", "ProductID", "name");
+
+  refreshMissionTimeButtonStates();
+  applyHubPermissions('mission_edit');
+  if (new URLSearchParams(window.location.search).get('mode') === 'edit') {
+    document.getElementById('editLookupBox').style.display = 'block';
+  } else {
+    autosaveCheckAllowed = true;
+    maybeCheckAutosaveAfterDropdowns_();
+  }
+  lockFieldsForPendingShipment();
+  flushEverything_();
+
+};
+
+function getHubUserCode() {
+  try {
+    const saved = localStorage.getItem("kpt_hub_user");
+    if (!saved) return "";
+    return JSON.parse(saved).userCode || "";
+  } catch (e) {
+    return "";
+  }
+}
+
+// اگه از طریق هاب لاگین شده و دسترسی ویرایش نداشته باشه، دکمه ویرایش قبلی مخفی می‌شود
+function applyHubPermissions(editPermissionKey) {
+
+  try {
+
+    const saved = localStorage.getItem("kpt_hub_user");
+    if (!saved) return;
+
+    const user = JSON.parse(saved);
+    const btn = document.getElementById("editToggleBtn");
+
+    if (btn && user.pages && user.pages.indexOf(editPermissionKey) === -1) {
+      btn.style.display = "none";
+    }
+
+  } catch (e) {
+    console.error("خطا در بررسی دسترسی هاب: " + e.message);
+  }
+
+}
+
+const FORM_TYPE = "mission";
+
+// شناسه‌های نوع ماموریت طبق جدول ref > MissionType
+const MISSION_TYPE_SEND = "TRA0001";      // ارسال
+const MISSION_TYPE_RETURN = "TRA0002";    // فقط برگشت پالت خالی
+const MISSION_TYPE_TRANSFER = "TRA0003";  // انتقال داخل کارخانه
+
+// DestinationID ثابت مربوط به شرکت خودمون (KPT) - مبنای چک GPS ورود به انبار
+const WAREHOUSE_DESTINATION_ID = "DE0017";
+
+let editMode = false;
+let editRecordID = null;
+let currentFormSessionId_ = null;
+let draftID = null;
+const MISSION_AUTOSAVE_KEY = "kpt_mission_autosave";
+let dropdownsLoadedCount = 0;
+const TOTAL_MISSION_DROPDOWNS = 8;
+let autosaveCheckAllowed = false;
+
+function maybeCheckAutosaveAfterDropdowns_() {
+  if (autosaveCheckAllowed && dropdownsLoadedCount >= TOTAL_MISSION_DROPDOWNS) {
+    checkForAutosavedMission();
+  }
+}
+
+
+document.getElementById('editToggleBtn').addEventListener('click', function () {
+  const box = document.getElementById('editLookupBox');
+  box.style.display = (box.style.display === 'none') ? 'block' : 'none';
+});
+
+
+document.getElementById('loadEditBtn').addEventListener('click', function () {
+
+  const id = document.getElementById('editRecordID').value.trim();
+
+  if (!id) return;
+
+  google.script.run
+    .withSuccessHandler(function (data) {
+      loadFormForEdit(data);
+    })
+    .withFailureHandler(function (err) {
+      alert(err.message);
+    })
+    .getMissionRecordByIDOrShipment(id);
+
+});
+
+function getDeviceTimeString_() {
+  const d = new Date();
+  const pad = function (n) { return String(n).padStart(2, '0'); };
+  return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+}
+
+
+function loadFormForEdit(data) {
+
+  try {
+
+    editMode = true;
+    editRecordID = data.missionID;
+
+    document.querySelectorAll('input, select, textarea').forEach(function (el) {
+      el.disabled = false;
+    });
+
+    document.getElementById('date').value = data.date;
+    document.getElementById('shift').value = data.shift;
+    setSelectByTextOrValue('missionType', data.missionType);
+    setSelectByTextOrValue('driver', data.driver);
+    setSelectByTextOrValue('vehicle', data.vehicle);
+    setSelectByTextOrValue('origin', data.origin);
+    setSelectByTextOrValue('destination', data.destination);
+    document.getElementById('startKM').value = data.startKM || '';
+    document.getElementById('endKM').value = data.endKM || '';
+    setSelectByTextOrValue('delayReason', data.delayReason || '');
+    document.getElementById('notes').value = data.notes || '';
+
+    const shipmentSlots = [
+      { no: data.shipmentNo1, product: data.product1, qty: data.quantity1 },
+      { no: data.shipmentNo2, product: data.product2, qty: data.quantity2 },
+      { no: data.shipmentNo3, product: data.product3, qty: data.quantity3 }
+    ];
+
+    shipments = shipmentSlots
+      .filter(function (item) { return !isEmpty(item.no); })
+      .map(function (item) { return { no: item.no, product: item.product, qty: item.qty }; });
+
+    renderShipmentTable();
+
+    if (document.getElementById('missionType').value === MISSION_TYPE_TRANSFER) {
+      setSelectByTextOrValue('transferProductSelect', data.product1 || '');
+      document.getElementById('transferQuantityInput').value = (data.quantity1 && data.quantity1 !== "0") ? data.quantity1 : '';
+    }
+
+    document.getElementById('dispatchTime').innerText = data.dispatchTime || '';
+    document.getElementById('arrivalTime').innerText = data.arrivalTime || '';
+    document.getElementById('unloadingStartTime').innerText = data.unloadingStartTime || '';
+    document.getElementById('palletLoadingStartTime').innerText = data.palletLoadingStartTime || '';
+    document.getElementById('returnTime').innerText = data.returnTime || '';
+    document.getElementById('warehouseArrivalTime').innerText = data.warehouseArrivalTime || '';
+
+    // بازیابی فاصله‌های GPS قبلاً ثبت‌شده (اگه ماموریت قبلاً چک شده باشه)
+    eventDistances = {};
+    if (data.arrivalDistance) eventDistances.arrivalDistance = data.arrivalDistance;
+    if (data.unloadingStartDistance) eventDistances.unloadingStartDistance = data.unloadingStartDistance;
+    if (data.warehouseDistance) eventDistances.warehouseDistance = data.warehouseDistance;
+
+    // وضعیت پالت خالی
+    const hasPalletData = (data.palletDetails && data.palletDetails.length > 0) || (data.palletCount && Number(data.palletCount) > 0);
+
+    if (document.getElementById('missionType').value === MISSION_TYPE_SEND && hasPalletData) {
+      document.getElementById('hasPalletReturn').value = 'yes';
+    } else {
+      document.getElementById('hasPalletReturn').value = 'no';
+    }
+
+    document.getElementById('palletCount').value = data.palletCount || '';
+
+    updateFormForMissionType();
+
+    if (data.palletDetails && data.palletDetails.length > 0) {
+      createPalletRows(data.palletDetails.length);
+      data.palletDetails.forEach(function (item, index) {
+        const no = String(index + 1).padStart(2, '0');
+        const input = document.getElementById('palletNo' + no);
+        if (input) input.value = item.palletNo;
+      });
+      document.getElementById('palletNumbersSection').style.display = 'block';
+    }
+
+    document.getElementById('missionID').innerText = data.missionID;
+
+    document.getElementById('saveBtn').disabled = false;
+    document.getElementById('saveBtn').innerText = 'ذخیره ویرایش';
+
+  } catch (err) {
+
+    console.error('خطای loadFormForEdit: ' + err.message);
+    alert('خطا در بارگذاری فرم برای ویرایش: ' + err.message);
+
+  }
+
+}
+
+
+function loadDropdown(selectId, tableName, valueField, textField) {
+
+  google.script.run
+    .withSuccessHandler(function (rows) {
+
+      const select = document.getElementById(selectId);
+
+      select.innerHTML = "";
+
+      const firstOption = document.createElement("option");
+      firstOption.value = "";
+      firstOption.text = "انتخاب کنید";
+
+      select.appendChild(firstOption);
+
+      rows.forEach(function (row) {
+
+        const option = document.createElement("option");
+
+        option.value = row[valueField];
+        option.text = row[textField];
+
+        select.appendChild(option);
+
+      });
+
+      select.selectedIndex = 0;
+
+      if (selectId === "driver" && window.PRESET_DRIVER_ID) {
+        select.value = window.PRESET_DRIVER_ID;
+      }
+
+      dropdownsLoadedCount++;
+      maybeCheckAutosaveAfterDropdowns_();
+
+    })
+    .getReference(tableName);
+
+}
+
+
+/************************************************
+ *************** Validation **********************
+ ************************************************/
+
+function isEmpty(value) {
+
+  return value === null ||
+    value === undefined ||
+    value.toString().trim() === "";
+
+}
+
+function showError(message) {
+
+  alert(message);
+
+}
+
+// متن (شرح/نام) گزینه‌ی انتخاب‌شده‌ی یک select را برمی‌گرداند (نه ID آن)
+function selectedText(id) {
+  const el = document.getElementById(id);
+  const opt = el.options[el.selectedIndex];
+  return opt ? opt.text : "";
+}
+
+// یک select را بر اساس شرح (یا در صورت نبود، بر اساس ID قدیمی برای سازگاری با رکوردهای قبلی) ست می‌کند
+function setSelectByTextOrValue(id, val) {
+  const el = document.getElementById(id);
+  const target = String(val).trim();
+  for (let i = 0; i < el.options.length; i++) {
+    if (String(el.options[i].text).trim() === target || String(el.options[i].value).trim() === target) {
+      el.selectedIndex = i;
+      return;
+    }
+  }
+}
+
+/************************************************
+ ****** نمایش/مخفی کردن بخش‌های فرم بر اساس نوع ماموریت ******
+ ************************************************/
+function updateFormForMissionType() {
+
+  const type = document.getElementById('missionType').value;
+
+  if (!type) {
+    lockFieldsForPendingShipment();
+    document.getElementById('shipmentSection').style.display = '';
+    document.getElementById('palletQuestionSection').style.display = 'none';
+    return;
+  }
+
+  const isSend = type === MISSION_TYPE_SEND;
+  const isTransfer = type === MISSION_TYPE_TRANSFER;
+  const isPalletOnly = type === MISSION_TYPE_RETURN;
+
+
+  document.getElementById('shipmentSection').style.display = isTransfer ? 'none' : '';
+  document.getElementById('transferSection').style.display = isTransfer ? '' : 'none';
+  document.getElementById('palletQuestionSection').style.display = isSend ? 'block' : 'none';
+
+  document.getElementById('unloadingRow').style.display = isSend ? 'flex' : 'none';
+  document.getElementById('returnRow').style.display = isTransfer ? 'none' : 'flex';
+  document.getElementById('warehouseRow').style.display = 'flex';
+
+  if (!isSend) {
+    document.getElementById('hasPalletReturn').value = 'no';
+  }
+
+  const hasPallet = document.getElementById('hasPalletReturn').value === 'yes';
+  const showPalletFields = isPalletOnly || (isSend && hasPallet);
+
+  document.getElementById('palletCountSection').style.display = showPalletFields ? 'block' : 'none';
+  document.getElementById('palletLoadingRow').style.display = showPalletFields ? 'flex' : 'none';
+
+  if (!showPalletFields) {
+    document.getElementById('palletNumbersSection').style.display = 'none';
+  }
+
+  // برای نوع «ارسال»، تا وقتی حداقل یک محموله اسکن/اضافه نشده، بقیه فیلدها قفل بمونن
+  if (isSend) {
+    if (shipments.length === 0) {
+      lockFieldsForPendingShipment();
+    } else {
+      unlockFieldsAfterShipment();
+    }
+  } else {
+    unlockAllMainFields();
+  }
+
+  refreshMissionTimeButtonStates();
+
+}
+
+const LOCKABLE_FIELDS = ['date', 'shift', 'origin', 'destination', 'driver', 'vehicle', 'startKM'];
+
+function lockFieldsForPendingShipment() {
+  LOCKABLE_FIELDS.forEach(function (id) {
+    document.getElementById(id).disabled = true;
+  });
+}
+
+function unlockFieldsAfterShipment() {
+  ['driver', 'vehicle', 'startKM'].forEach(function (id) {
+    document.getElementById(id).disabled = false;
+  });
+  ['date', 'shift', 'origin', 'destination'].forEach(function (id) {
+    document.getElementById(id).disabled = true;
+  });
+}
+
+function unlockAllMainFields() {
+  LOCKABLE_FIELDS.forEach(function (id) {
+    document.getElementById(id).disabled = false;
+  });
+
+}
+
+document.getElementById('missionType').addEventListener('change', updateFormForMissionType);
+document.getElementById('hasPalletReturn').addEventListener('change', updateFormForMissionType);
+document.getElementById('missionForm').addEventListener('input', autosaveMissionForm);
+document.getElementById('missionForm').addEventListener('change', autosaveMissionForm);
+
+/************************************************
+ ****** محموله‌ها: اسکن بارکد یا وارد کردن دستی ******
+ ************************************************/
+
+let shipments = []; // [{ no, product, qty }]
+
+function renderShipmentTable() {
+
+  const tbody = document.getElementById("shipmentTableBody");
+
+  tbody.innerHTML = "";
+
+  shipments.forEach(function (item, index) {
+
+    tbody.innerHTML += `
+      <tr>
+        <td>${index + 1}</td>
+        <td>${item.no}</td>
+        <td>${item.product}</td>
+        <td>${item.qty}</td>
+        <td class="no-print">
+          <button type="button" onclick="removeShipment(${index})">✕</button>
+        </td>
+      </tr>
+    `;
+
+  });
+
+  autosaveMissionForm();
+
+}
+
+function removeShipment(index) {
+
+  shipments.splice(index, 1);
+  renderShipmentTable();
+
+  if (shipments.length === 0 && document.getElementById('missionType').value === MISSION_TYPE_SEND) {
+
+    ['date', 'shift', 'origin', 'destination'].forEach(function (id) {
+      document.getElementById(id).value = '';
+    });
+
+  }
+
+  updateFormForMissionType();
+
+}
+
+function addShipmentByID(id) {
+
+  id = (id || "").trim();
+
+  if (isEmpty(id))
+    return showError("شماره محموله را وارد یا اسکن کنید.");
+
+  if (shipments.length >= 3)
+    return showError("حداکثر ۳ محموله در هر ماموریت قابل ثبت است.");
+
+  if (shipments.some(function (s) { return s.no === id; }))
+    return showError("این محموله قبلاً به لیست اضافه شده است.");
+
+  google.script.run
+    .withSuccessHandler(function (info) {
+
+      shipments.push({
+        no: info.shipmentID,
+        product: info.productName || info.product,
+        qty: info.quantity
+      });
+
+      renderShipmentTable();
+
+      document.getElementById("scanShipmentID").value = "";
+
+      if (shipments.length === 1 && document.getElementById('missionType').value === MISSION_TYPE_SEND) {
+
+        if (info.destination) {
+          setSelectByTextOrValue('destination', info.destination);
+        }
+
+        setSelectByTextOrValue('origin', WAREHOUSE_DESTINATION_ID);
+
+        if (info.date) {
+          document.getElementById('date').value = info.date;
+        }
+
+        if (info.shift) {
+          setSelectByTextOrValue('shift', info.shift);
+        }
+
+      }
+
+      updateFormForMissionType();
+
+    })
+    .withFailureHandler(function (err) {
+      showError(err.message);
+    })
+   .getShipmentInfo(id, editRecordID, draftID);
+
+}
+
+document.getElementById("addShipmentBtn").addEventListener("click", function () {
+  addShipmentByID(document.getElementById("scanShipmentID").value);
+});
+
+/************************************************
+ ****** اسکن بارکد از عکس گرفته‌شده با دوربین ******
+ ************************************************/
+
+document.getElementById("scanBtn").addEventListener("click", function () {
+  document.getElementById("scanFileInput").click();
+});
+
+document.getElementById("scanFileInput").addEventListener("change", function (e) {
+
+  const file = e.target.files[0];
+  e.target.value = "";
+
+  if (!file) return;
+
+  decodeBarcodeFromImageFile(file);
+
+});
+
+async function getResizedCanvas(file, maxDim) {
+
+  const dataURL = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+  const img = await new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = dataURL;
+  });
+
+  let width = img.width;
+  let height = img.height;
+
+  if (width > maxDim || height > maxDim) {
+    const scale = maxDim / Math.max(width, height);
+    width = Math.round(width * scale);
+    height = Math.round(height * scale);
+  }
+
+  const canvas = document.getElementById("scanCanvas");
+  const ctx = canvas.getContext("2d");
+  canvas.width = width;
+  canvas.height = height;
+  ctx.drawImage(img, 0, 0, width, height);
+
+  return canvas;
+
+}
+
+async function decodeBarcodeFromImageFile(file) {
+
+  document.getElementById("scanProcessingModal").classList.add("open");
+
+  try {
+
+    const canvas = await getResizedCanvas(file, 1000);
+
+    if ('BarcodeDetector' in window) {
+
+      try {
+
+        const formats = await BarcodeDetector.getSupportedFormats();
+
+        if (formats.includes('qr_code')) {
+
+          const detector = new BarcodeDetector({ formats: ['qr_code'] });
+          const bitmap = await createImageBitmap(canvas);
+          const barcodes = await detector.detect(bitmap);
+
+          if (barcodes.length > 0) {
+
+            document.getElementById("scanProcessingModal").classList.remove("open");
+            document.getElementById("scanShipmentID").value = barcodes[0].rawValue;
+            addShipmentByID(barcodes[0].rawValue);
+            return;
+
+          }
+
+        }
+
+      } catch (nativeErr) {
+        console.warn("BarcodeDetector ناموفق بود، رفتن به jsQR", nativeErr);
+      }
+
+    }
+
+    const ctx = canvas.getContext("2d");
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const result = (typeof jsQR === "function") ? jsQR(imageData.data, imageData.width, imageData.height, {
+      inversionAttempts: "attemptBoth"
+    }) : null;
+
+    document.getElementById("scanProcessingModal").classList.remove("open");
+
+    if (result && result.data) {
+      document.getElementById("scanShipmentID").value = result.data;
+      addShipmentByID(result.data);
+    } else {
+      showError("بارکدی در عکس پیدا نشد. لطفاً دوباره و از فاصله نزدیک‌تر عکس بگیرید.");
+    }
+
+  } catch (err) {
+
+    document.getElementById("scanProcessingModal").classList.remove("open");
+    showError("خطا در پردازش عکس: " + err.message);
+
+  }
+
+}
+
+/************************************************
+ ****** پالت خالی: تعداد + شماره‌ها ******
+ ************************************************/
+
+function recordPalletLoadingStartTime() {
+
+  const count = parseInt(document.getElementById('palletCount').value, 10);
+
+  if (!count || count < 1)
+    return showError('لطفاً ابتدا تعداد پالت خالی را وارد کنید.');
+
+  google.script.run
+    .withSuccessHandler(function (time) {
+
+      document.getElementById('palletLoadingStartTime').innerText = time;
+      refreshMissionTimeButtonStates();
+      autosaveMissionForm();
+
+      const fields = { palletLoadingStartTime: time, palletCount: count };
+      const targetKey = draftID || "PENDING";
+      addToSyncQueue_(targetKey, fields);
+
+      flushEverything_(function () {
+        const stillQueued = getSyncQueue_().some(function (q) {
+          return q.field === 'palletLoadingStartTime' || q.field === 'palletCount';
+        });
+        if (stillQueued) {
+          alert('⚠ اتصال اینترنت برقرار نیست. این زمان روی گوشی شما ثبت شد و به‌محض اتصال، خودکار ارسال می‌شود.');
+        }
+      });
+
+    })
+    .withFailureHandler(function (err) { alert(err.message); })
+    .getServerTime();
+
+}
+
+document.getElementById('palletCount').addEventListener('change', function () {
+
+  let count = parseInt(this.value, 10);
+
+  if (isNaN(count) || count < 1) {
+    document.getElementById('palletNumbersSection').style.display = 'none';
+    return;
+  }
+
+  if (count > 50) {
+    count = 50;
+    this.value = count;
+  }
+
+  createPalletRows(count);
+  document.getElementById('palletNumbersSection').style.display = 'block';
+
+});
+
+function createPalletRows(count) {
+
+  const tbody = document.getElementById('palletTableBody');
+  tbody.innerHTML = '';
+
+  for (let i = 1; i <= count; i++) {
+    const no = String(i).padStart(2, '0');
+    tbody.innerHTML += `
+      <tr>
+        <td>${i}</td>
+        <td><input type="text" id="palletNo${no}"></td>
+      </tr>
+    `;
+  }
+
+}
+
+function getPalletNumbers() {
+  const list = [];
+  document.querySelectorAll('#palletTableBody input').forEach(function (input) {
+    const v = input.value.trim();
+    if (v !== '') list.push(v);
+  });
+  return list;
+}
+
+/************************************************
+ ****** ثبت زمان‌ها + چک موقعیت مکانی (GPS) ******
+ ************************************************/
+
+// نگاشت اینکه هر رویداد زمانی باید فاصله‌اش با کدوم فیلد (مقصد) چک بشه
+// توجه: dispatchTime، palletLoadingStartTime و returnTime عمداً اینجا نیستند (چک موقعیت ندارند)
+const LOCATION_CHECK_MAP = {
+  arrivalTime: { locationField: "destination", distanceField: "arrivalDistance" },
+  unloadingStartTime: { locationField: "destination", distanceField: "unloadingStartDistance" },
+  warehouseArrivalTime: { fixedDestinationID: WAREHOUSE_DESTINATION_ID, distanceField: "warehouseDistance" }
+};
+
+let eventDistances = {}; // { arrivalDistance: 850, unloadingStartDistance: 40, warehouseDistance: 30 }
+
+function validateFieldsBeforeDispatch() {
+
+  const missionType = document.getElementById('missionType').value;
+
+  if (isEmpty(document.getElementById('date').value)) {
+    showError('تاریخ را انتخاب کنید.');
+    return false;
+  }
+
+  if (isEmpty(document.getElementById('shift').value)) {
+    showError('شیفت را انتخاب کنید.');
+    return false;
+  }
+
+  if (isEmpty(missionType)) {
+    showError('نوع ماموریت را انتخاب کنید.');
+    return false;
+  }
+
+  if (isEmpty(document.getElementById('driver').value)) {
+    showError('راننده را انتخاب کنید.');
+    return false;
+  }
+
+  if (isEmpty(document.getElementById('vehicle').value)) {
+    showError('خودرو را انتخاب کنید.');
+    return false;
+  }
+
+  if (isEmpty(document.getElementById('origin').value)) {
+    showError('مبدأ را انتخاب کنید.');
+    return false;
+  }
+
+  if (isEmpty(document.getElementById('destination').value)) {
+    showError('مقصد را انتخاب کنید.');
+    return false;
+  }
+
+  if (document.getElementById('origin').value === document.getElementById('destination').value) {
+    showError('مبدأ و مقصد نمی‌توانند یکسان باشند.');
+    return false;
+  }
+
+  if (isEmpty(document.getElementById('startKM').value)) {
+    showError('کیلومتر شروع را وارد کنید.');
+    return false;
+  }
+  if (missionType === MISSION_TYPE_SEND && shipments.length === 0) {
+    showError('حداقل یک محموله باید اسکن یا اضافه شود.');
+    return false;
+  }
+
+  if (missionType === MISSION_TYPE_TRANSFER && isEmpty(document.getElementById('transferProductSelect').value)) {
+    showError('نام محصول انتقالی را انتخاب کنید.');
+    return false;
+  }
+
+  return true;
+
+}
+
+let dispatchInFlight_ = false;
+
+function setServerTime(elementId) {
+
+  if (elementId === 'dispatchTime') {
+
+    // جلوگیری از دوبار زدن پشت سر هم دکمه اعزام (تا جواب سرور برسد، کلیک دوم نادیده گرفته می‌شود)
+    if (dispatchInFlight_ || !isEmpty(document.getElementById('dispatchTime').innerText.trim())) return;
+
+    if (!validateFieldsBeforeDispatch()) return;
+
+    dispatchInFlight_ = true;
+
+    const dispatchBtn = document.getElementById('dispatchTimeBtn');
+    dispatchBtn.disabled = true;
+    dispatchBtn.innerText = 'در حال ثبت...';
+
+  }
+  if (elementId === 'returnTime') {
+
+    const missionTypeForReturn = document.getElementById('missionType').value;
+    const isPalletOnlyType = missionTypeForReturn === MISSION_TYPE_RETURN;
+    const hasPallet = missionTypeForReturn === MISSION_TYPE_SEND && document.getElementById('hasPalletReturn').value === 'yes';
+
+    if (hasPallet || isPalletOnlyType) {
+
+      const count = parseInt(document.getElementById('palletCount').value, 10);
+
+      if (!count || count < 1)
+        return showError('تعداد پالت خالی مشخص نشده است.');
+
+      const palletNumbers = getPalletNumbers();
+
+      if (palletNumbers.length !== count)
+        return showError('تعداد پالت‌های وارد شده (' + palletNumbers.length + ') با تعداد اعلام‌شده (' + count + ') یکسان نیست.');
+
+      const seen = new Set();
+      for (let i = 0; i < palletNumbers.length; i++) {
+        if (isEmpty(palletNumbers[i]))
+          return showError('شماره پالت ردیف ' + (i + 1) + ' وارد نشده است.');
+        if (seen.has(palletNumbers[i]))
+          return showError('شماره پالت تکراری است: ' + palletNumbers[i]);
+        seen.add(palletNumbers[i]);
+      }
+           const returnBtn = document.getElementById('returnTimeBtn');
+      returnBtn.disabled = true;
+      returnBtn.innerText = 'در حال بررسی...';
+
+      let palletCheckSettled = false;
+
+      const palletCheckTimeoutId = setTimeout(function () {
+        if (palletCheckSettled) return;
+        palletCheckSettled = true;
+        returnBtn.disabled = false;
+        returnBtn.innerText = 'ثبت زمان';
+        proceedWithReturnTime_();
+      }, 10000);
+
+      google.script.run
+        .withSuccessHandler(function (invalidList) {
+
+          if (palletCheckSettled) return;
+          palletCheckSettled = true;
+          clearTimeout(palletCheckTimeoutId);
+
+          returnBtn.disabled = false;
+          returnBtn.innerText = 'ثبت زمان';
+
+          if (invalidList && invalidList.length > 0) {
+            alert('شماره پالت(های) زیر در شیت PalletMaster تعریف نشده‌اند: ' + invalidList.join('، '));
+            return;
+          }
+
+          proceedWithReturnTime_();
+
+        })
+        .withFailureHandler(function (err) {
+          if (palletCheckSettled) return;
+          palletCheckSettled = true;
+          clearTimeout(palletCheckTimeoutId);
+          returnBtn.disabled = false;
+          returnBtn.innerText = 'ثبت زمان';
+          alert(err.message);
+        })
+        .checkPalletNumbersValid(palletNumbers);
+
+      return;
+
+    }
+
+  }
+  const missionType = document.getElementById('missionType').value;
+  const locationCheck = LOCATION_CHECK_MAP[elementId];
+
+  // برای نوع «انتقال داخل کارخانه» هیچ‌کدام از زمان‌ها چک GPS ندارند
+  if (!locationCheck || missionType === MISSION_TYPE_TRANSFER) {
+    return recordTimeOnly(elementId);
+  }
+
+  const destinationID = locationCheck.fixedDestinationID
+    ? locationCheck.fixedDestinationID
+    : document.getElementById(locationCheck.locationField).value;
+
+  if (!destinationID) {
+    return showError("لطفاً ابتدا مقصد را انتخاب کنید تا موقعیت مکانی چک شود.");
+  }
+
+  if (!navigator.geolocation) {
+    return recordTimeWithLocation(elementId, locationCheck, destinationID, null, null);
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    function (pos) {
+      recordTimeWithLocation(
+        elementId, locationCheck, destinationID,
+        pos.coords.latitude, pos.coords.longitude
+      );
+    },
+    function () {
+      // راننده دسترسی GPS رو رد کرد یا خطا داد -> بدون چک موقعیت ثبت کن (warn-only، بلاک نمی‌کنیم)
+      recordTimeWithLocation(elementId, locationCheck, destinationID, null, null);
+    },
+    { enableHighAccuracy: true, timeout: 8000 }
+  );
+
+}
+
+
+function proceedWithReturnTime_() {
+
+  const missionType = document.getElementById('missionType').value;
+
+  const locationCheck = LOCATION_CHECK_MAP['returnTime'];
+
+  if (!locationCheck || missionType === MISSION_TYPE_TRANSFER) {
+    return recordTimeOnly('returnTime');
+  }
+
+  const destinationID = locationCheck.fixedDestinationID
+    ? locationCheck.fixedDestinationID
+    : document.getElementById(locationCheck.locationField).value;
+
+  if (!destinationID) {
+    return showError("لطفاً ابتدا مقصد را انتخاب کنید تا موقعیت مکانی چک شود.");
+  }
+
+  if (!navigator.geolocation) {
+    return recordTimeWithLocation('returnTime', locationCheck, destinationID, null, null);
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    function (pos) {
+      recordTimeWithLocation('returnTime', locationCheck, destinationID, pos.coords.latitude, pos.coords.longitude);
+    },
+    function () {
+      recordTimeWithLocation('returnTime', locationCheck, destinationID, null, null);
+    },
+    { enableHighAccuracy: true, timeout: 8000 }
+  );
+
+}
+
+
+
+
+function recordTimeOnly(elementId) {
+
+  let settled = false;
+  const deviceTimeAtClick = getDeviceTimeString_();
+
+  const timeoutId = setTimeout(function () {
+    if (settled) return;
+    settled = true;
+    applyTimeToUI(elementId, deviceTimeAtClick);
+    if (elementId === 'dispatchTime') maybeCreateMissionDraft();
+  }, 10000);
+
+  google.script.run
+    .withSuccessHandler(function (time) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutId);
+      applyTimeToUI(elementId, time);
+      if (elementId === 'dispatchTime') maybeCreateMissionDraft();
+    })
+    .withFailureHandler(function () {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutId);
+      applyTimeToUI(elementId, deviceTimeAtClick);
+      if (elementId === 'dispatchTime') maybeCreateMissionDraft();
+    })
+    .getServerTime();
+
+}
+
+function recordTimeWithLocation(elementId, locationCheck, destinationID, lat, lng) {
+
+  let settled = false;
+  const deviceTimeAtClick = getDeviceTimeString_();
+
+  const timeoutId = setTimeout(function () {
+    if (settled) return;
+    settled = true;
+    applyTimeToUI(elementId, deviceTimeAtClick);
+  }, 10000);
+
+  google.script.run
+    .withSuccessHandler(function (result) {
+
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutId);
+
+      applyTimeToUI(elementId, result.time);
+
+      if (result.distance !== null) {
+        eventDistances[locationCheck.distanceField] = result.distance;
+      }
+
+      if (result.distance !== null && !result.withinRange) {
+        alert("⚠ فاصله شما تا مقصد " + result.distance + " متر است. زمان با این هشدار ثبت شد.");
+      }
+
+    })
+    .withFailureHandler(function () {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutId);
+      applyTimeToUI(elementId, deviceTimeAtClick);
+    })
+    .getServerTimeWithLocation(destinationID, lat, lng);
+
+}
+
+function applyTimeToUI(elementId, time) {
+
+  document.getElementById(elementId).innerText = time;
+
+  refreshMissionTimeButtonStates();
+
+  if (!editMode && elementId !== 'dispatchTime') {
+
+    const fields = {};
+    fields[elementId] = time;
+
+    if (elementId === 'warehouseArrivalTime' && document.getElementById('missionType').value === MISSION_TYPE_TRANSFER) {
+      fields.quantity1 = document.getElementById('transferQuantityInput').value || "0";
+    }
+
+    const targetKey = draftID || "PENDING";
+    addToSyncQueue_(targetKey, fields);
+
+    flushEverything_(function () {
+      const stillQueued = getSyncQueue_().some(function (q) { return q.field === elementId; });
+      if (stillQueued) {
+        alert('⚠ اتصال اینترنت برقرار نیست. این زمان روی گوشی شما ثبت شد و به‌محض اتصال، خودکار ارسال می‌شود.');
+      }
+    });
+
+  }
+
+  autosaveMissionForm();
+
+}
+
+// ------------------------------------------------------------
+// پیش‌نویس ماموریت: به محض ثبت «ساعت اعزام»، یه ردیف موقت توی MissionDraft ساخته می‌شه
+// (نه توی MissionHeader) تا هیچ شماره‌ی MSN واقعی مصرف نشه و شیت اصلی رکورد ناقص نبینه
+//
+// برای مقاومت در برابر قطعی اینترنت:
+// ۱) داده‌ی اولیه‌ی Draft + یه clientToken یکتا توی localStorage ذخیره می‌شه
+// ۲) هر تلاش (چه فوری، چه از تایمر، چه بعد از رفرش صفحه) همون clientToken رو دوباره می‌فرسته
+// ۳) سرور (saveMissionDraft در Code.gs) قبل از appendRow، اول با این توکن جستجو می‌کنه؛
+//    اگه از قبل ردیفی با همین توکن بود، همون draftID قدیمی رو برمی‌گردونه و رکورد/پیام تکراری نمی‌سازه
+// ------------------------------------------------------------
+
+const PENDING_DRAFT_KEY = "kpt_mission_pending_draft";
+
+function generateClientToken_() {
+  if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+    return window.crypto.randomUUID();
+  }
+  return 'ct-' + Date.now() + '-' + Math.random().toString(36).substring(2, 10);
+}
+
+function buildDraftInitialData_() {
+
+  const data = {
+    date: document.getElementById("date").value,
+    shift: document.getElementById("shift").value,
+    missionType: selectedText("missionType"),
+    driver: selectedText("driver"),
+    vehicle: selectedText("vehicle"),
+    origin: selectedText("origin"),
+    destination: selectedText("destination"),
+    startKM: document.getElementById("startKM").value,
+    dispatchTime: document.getElementById("dispatchTime").innerText,
+    userCode: getHubUserCode()
+  };
+
+  if (document.getElementById("missionType").value === MISSION_TYPE_SEND) {
+    shipments.forEach(function (item, index) {
+      const no = index + 1;
+      data["shipmentNo" + no] = item.no;
+      data["product" + no] = item.product;
+      data["quantity" + no] = item.qty;
+    });
+  }
+
+  if (document.getElementById("missionType").value === MISSION_TYPE_TRANSFER) {
+    data.product1 = selectedText("transferProductSelect");
+    data.quantity1 = document.getElementById("transferQuantityInput").value || "0";
+  }
+
+  return data;
+
+}
+
+function maybeCreateMissionDraft() {
+
+  if (editMode || draftID) return;
+
+  const data = buildDraftInitialData_();
+  data.clientToken = generateClientToken_();
+
+  // این نشست تازه رو مشخص می‌کنیم؛ هر جوابی که بعداً برسه ولی برای نشست دیگه‌ای باشه، نادیده گرفته می‌شه
+  currentFormSessionId_ = data.clientToken;
+
+  try {
+    localStorage.setItem(PENDING_DRAFT_KEY, JSON.stringify(data));
+  } catch (e) {}
+
+  document.getElementById('missionID').innerText = 'در حال ثبت... (پیش‌نویس)';
+
+  tryCreateMissionDraft_();
+
+}
+
+let draftCreationInProgress_ = false;
+
+function tryCreateMissionDraft_(onDone) {
+
+  if (draftID || editMode) {
+    if (typeof onDone === 'function') onDone();
+    return;
+  }
+
+  let raw;
+  try {
+    raw = localStorage.getItem(PENDING_DRAFT_KEY);
+  } catch (e) { raw = null; }
+
+  if (!raw) {
+    if (typeof onDone === 'function') onDone();
+    return;
+  }
+
+  if (draftCreationInProgress_) {
+    if (typeof onDone === 'function') onDone();
+    return;
+  }
+
+  draftCreationInProgress_ = true;
+  const data = JSON.parse(raw);
+
+  // این توکن رو با نشست فعلی همراه می‌کنیم؛ اگه جواب دیر برسه و تا اون‌موقع نشست عوض شده باشه، نادیده می‌گیریم
+  const requestSessionId = data.clientToken;
+
+  let settled = false;
+
+  const timeoutId = setTimeout(function () {
+    if (settled) return;
+    settled = true;
+    draftCreationInProgress_ = false;
+    if (typeof onDone === 'function') onDone();
+  }, 12000);
+
+  google.script.run
+    .withSuccessHandler(function (result) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutId);
+      draftCreationInProgress_ = false;
+
+      // این جواب مال یه تلاش قدیمی/رهاشده‌ست (کاربر از اون‌موقع رفته سراغ ماموریت دیگه‌ای)
+      // پس هیچ‌کاری روی وضعیت فعلی انجام نمی‌دیم — نه draftID رو ست می‌کنیم، نه صف رو remap می‌کنیم، نه localStorage فعلی رو پاک می‌کنیم
+      // (اون ردیف Draft یتیم روی سرور باقی می‌مونه؛ در صورت نیاز از طریق «ادامه ماموریت ناتمام» با شماره‌ی محموله قابل بازیابیه، و بعد از ۲۴ ساعت خودکار پاک می‌شه)
+      if (requestSessionId !== currentFormSessionId_) {
+        if (typeof onDone === 'function') onDone();
+        return;
+      }
+
+      draftID = result.draftID;
+      try { localStorage.removeItem(PENDING_DRAFT_KEY); } catch (e) {}
+      remapPendingQueueToDraftID_(draftID);
+      if (typeof onDone === 'function') onDone();
+    })
+    .withFailureHandler(function (err) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutId);
+      draftCreationInProgress_ = false;
+      const msg = String((err && err.message) || '');
+
+      if (msg.indexOf('ماموریت باز') !== -1 || msg.indexOf('ثبت نهایی شده') !== -1) {
+
+        // این محموله در ماموریت دیگری است؛ تلاش مجدد بی‌فایده است و نباید تکرار شود
+        try { localStorage.removeItem(PENDING_DRAFT_KEY); } catch (e) {}
+        removePendingSyncItems_();
+
+        if (requestSessionId === currentFormSessionId_) {
+          document.getElementById('missionID').innerText = 'ثبت نشد (محموله تکراری)';
+          alert('⚠ ' + msg + '\n\nلطفاً صفحه را رفرش کنید.');
+        }
+
+      } else if (requestSessionId === currentFormSessionId_) {
+        console.error('خطا در ثبت پیش‌نویس ماموریت (دوباره تلاش می‌شود): ' + err.message);
+      }
+      if (typeof onDone === 'function') onDone();
+    })
+    .saveMissionDraft(data);
+
+}
+
+
+// ------------------------------------------------------------
+// ترتیب صعودی زمان‌ها: تا زمان قبلی ثبت نشده، دکمه زمان بعدی فعال نشود
+// ------------------------------------------------------------
+
+const MISSION_TIME_SEQUENCE = ['dispatchTime', 'arrivalTime', 'unloadingStartTime', 'palletLoadingStartTime', 'returnTime', 'warehouseArrivalTime'];
+
+const MISSION_TIME_ROW_MAP = {
+  unloadingStartTime: 'unloadingRow',
+  palletLoadingStartTime: 'palletLoadingRow',
+  returnTime: 'returnRow',
+  warehouseArrivalTime: 'warehouseRow'
+};
+
+function isTimeFieldVisible(id) {
+  const rowId = MISSION_TIME_ROW_MAP[id];
+  if (!rowId) return true;
+  const row = document.getElementById(rowId);
+  return row && row.style.display !== 'none';
+}
+
+function refreshMissionTimeButtonStates() {
+
+  let previousFilled = true;
+
+  MISSION_TIME_SEQUENCE.forEach(function (id) {
+
+    if (!isTimeFieldVisible(id)) return;
+
+    const span = document.getElementById(id);
+    const btn = document.getElementById(id + 'Btn');
+
+    if (!span || !btn) return;
+
+    const filled = !isEmpty(span.innerText.trim());
+
+    if (filled) {
+      btn.disabled = true;
+      btn.innerText = '✓ ثبت شد';
+      previousFilled = true;
+    } else {
+      btn.disabled = !previousFilled;
+      btn.innerText = 'ثبت زمان';
+      previousFilled = false;
+    }
+
+  });
+
+}
+
+/************************************************
+ ****** ثبت نهایی / ویرایش فرم ******
+ ************************************************/
+
+document
+  .getElementById("missionForm")
+  .addEventListener("submit", function (e) {
+
+    e.preventDefault();
+
+    const missionType = document.getElementById("missionType").value;
+    const isSend = missionType === MISSION_TYPE_SEND;
+    const isTransfer = missionType === MISSION_TYPE_TRANSFER;
+    const isPalletOnly = missionType === MISSION_TYPE_RETURN;
+
+    if (isEmpty(document.getElementById("date").value))
+      return showError("تاریخ را انتخاب کنید.");
+
+    if (isEmpty(document.getElementById("shift").value))
+      return showError("شیفت را انتخاب کنید.");
+
+    if (isEmpty(missionType))
+      return showError("نوع ماموریت را انتخاب کنید.");
+
+    if (isEmpty(document.getElementById("driver").value))
+      return showError("راننده را انتخاب کنید.");
+
+    if (isEmpty(document.getElementById("vehicle").value))
+      return showError("خودرو را انتخاب کنید.");
+
+    if (isEmpty(document.getElementById("origin").value))
+      return showError("مبدأ را انتخاب کنید.");
+
+    if (isEmpty(document.getElementById("destination").value))
+      return showError("مقصد را انتخاب کنید.");
+
+    if (document.getElementById("origin").value === document.getElementById("destination").value)
+      return showError("مبدأ و مقصد نمی‌توانند یکسان باشند.");
+
+    if (isEmpty(document.getElementById("startKM").value))
+      return showError("کیلومتر شروع را وارد کنید.");
+
+    if (isEmpty(document.getElementById("endKM").value))
+      return showError("کیلومتر پایان را وارد کنید.");
+
+    const startKM = Number(document.getElementById("startKM").value);
+    const endKM = Number(document.getElementById("endKM").value);
+
+    if (endKM < startKM)
+      return showError("کیلومتر پایان نمی‌تواند کمتر از کیلومتر شروع باشد.");
+
+
+    if (isEmpty(document.getElementById("dispatchTime").innerText.trim()))
+      return showError("ساعت اعزام ثبت نشده است.");
+
+    if (isEmpty(document.getElementById("warehouseArrivalTime").innerText.trim()))
+      return showError("ساعت ورود به انبار ثبت نشده است.");
+
+    // اعتبارسنجی مخصوص نوع «ارسال»
+    if (isSend) {
+
+      if (shipments.length === 0)
+        return showError("حداقل یک محموله باید اسکن یا اضافه شود.");
+
+      if (isEmpty(document.getElementById("unloadingStartTime").innerText.trim()))
+        return showError("ساعت شروع تخلیه ثبت نشده است.");
+
+    }
+
+    if (isTransfer && isEmpty(document.getElementById("transferProductSelect").value))
+      return showError("نام محصول انتقالی را انتخاب کنید.");
+
+    // ساعت خروج از سایت (برای ارسال و برگشت پالت لازم است، برای انتقال لازم نیست)
+    if (!isTransfer && isEmpty(document.getElementById("returnTime").innerText.trim()))
+      return showError("ساعت خروج از سایت ثبت نشده است.");
+
+    // اعتبارسنجی پالت خالی
+    const hasPallet = document.getElementById("hasPalletReturn").value === "yes";
+    const needsPallet = isPalletOnly || (isSend && hasPallet);
+
+    let palletNumbers = [];
+
+    if (needsPallet) {
+
+      const count = parseInt(document.getElementById("palletCount").value, 10);
+
+      if (!count || count < 1)
+        return showError("تعداد پالت خالی را وارد کنید.");
+
+      if (isEmpty(document.getElementById("palletLoadingStartTime").innerText.trim()))
+        return showError("ابتدا ساعت شروع بارگیری پالت خالی را ثبت کنید.");
+
+      palletNumbers = getPalletNumbers();
+
+      if (palletNumbers.length !== count)
+        return showError("تعداد پالت‌های وارد شده (" + palletNumbers.length + ") با تعداد اعلام‌شده (" + count + ") یکسان نیست.");
+
+      const seen = new Set();
+      for (let i = 0; i < palletNumbers.length; i++) {
+
+        if (isEmpty(palletNumbers[i]))
+          return showError("شماره پالت ردیف " + (i + 1) + " وارد نشده است.");
+
+        if (seen.has(palletNumbers[i]))
+          return showError("شماره پالت تکراری است: " + palletNumbers[i]);
+
+        seen.add(palletNumbers[i]);
+
+      }
+
+    }
+
+    const data = {
+
+      date: document.getElementById("date").value,
+      shift: document.getElementById("shift").value,
+      missionType: selectedText("missionType"),
+      driver: selectedText("driver"),
+      vehicle: selectedText("vehicle"),
+      origin: selectedText("origin"),
+      destination: selectedText("destination"),
+
+      startKM: document.getElementById("startKM").value,
+      endKM: document.getElementById("endKM").value,
+
+      dispatchTime: document.getElementById("dispatchTime").innerText,
+      arrivalTime: document.getElementById("arrivalTime").innerText,
+      unloadingStartTime: document.getElementById("unloadingStartTime").innerText,
+      palletLoadingStartTime: document.getElementById("palletLoadingStartTime").innerText,
+      returnTime: document.getElementById("returnTime").innerText,
+      warehouseArrivalTime: document.getElementById("warehouseArrivalTime").innerText,
+
+      delayReason: document.getElementById("delayReason").value ? selectedText("delayReason") : "",
+      notes: document.getElementById("notes").value
+
+    };
+
+    // فاصله‌های GPS ثبت‌شده (اگه چک شده باشن)
+    data.arrivalDistance = eventDistances.arrivalDistance || "";
+    data.unloadingStartDistance = eventDistances.unloadingStartDistance || "";
+    data.warehouseDistance = eventDistances.warehouseDistance || "";
+
+    data.palletCount = needsPallet ? document.getElementById("palletCount").value : "";
+    data.palletNumbers = needsPallet ? palletNumbers : [];
+    data.userCode = getHubUserCode();
+
+    if (isSend) {
+
+      shipments.forEach(function (item, index) {
+        const no = index + 1;
+        data["shipmentNo" + no] = item.no;
+        data["product" + no] = item.product;
+        data["quantity" + no] = item.qty;
+      });
+
+    }
+
+    if (isTransfer) {
+      data.product1 = selectedText("transferProductSelect");
+      data.quantity1 = document.getElementById("transferQuantityInput").value || "0";
+    }
+
+    document.getElementById("saveBtn").disabled = true;
+    document.getElementById("saveBtn").innerText = "در حال ثبت...";
+
+    const runner = google.script.run
+      .withSuccessHandler(function (result) {
+
+        alert(editMode ? "ویرایش با موفقیت ذخیره شد." : "ثبت با موفقیت انجام شد.");
+
+        clearMissionAutosave();
+
+        document.getElementById("missionID").innerText = result.missionID;
+
+        lockForm();
+        editMode = false;
+        draftID = null;
+        editRecordID = null;
+        document.getElementById('saveBtn').innerText = 'ثبت نهایی';
+
+      })
+      .withFailureHandler(function (err) {
+
+        if (String(err.message).indexOf('قبلاً ثبت نهایی شده') !== -1) {
+
+          alert('⚠ ' + err.message + '\n\nاین فرم دیگر قابل ثبت نیست. صفحه رفرش می‌شود.');
+
+          document.querySelectorAll('input, select, textarea, button').forEach(function (el) {
+            el.disabled = true;
+          });
+
+          clearMissionAutosave();
+          localStorage.removeItem(SYNC_QUEUE_KEY);
+          localStorage.removeItem(PENDING_DRAFT_KEY);
+
+          setTimeout(function () {
+            window.location.reload();
+          }, 2000);
+
+          return;
+
+        }
+
+        alert(err.message);
+        console.error(err);
+        document.getElementById("saveBtn").disabled = false;
+        document.getElementById("saveBtn").innerText = editMode ? "ذخیره ویرایش" : "ثبت نهایی";
+
+      });
+
+    if (draftID) {
+      flushEverything_(function () {
+        runner.finalizeMissionDraft(draftID, data);
+      });
+    } else if (editMode) {
+      runner.updateRecord(FORM_TYPE, editRecordID, data);
+    } else {
+      runner.saveMissionData(data);
+    }
+
+  });
+
+function lockForm() {
+
+  document.querySelectorAll("input").forEach(function (el) {
+    if (el.id !== "editRecordID") {
+      el.disabled = true;
+    }
+  });
+
+  document.querySelectorAll("select").forEach(function (el) {
+    el.disabled = true;
+  });
+
+  document.querySelectorAll("textarea").forEach(function (el) {
+    el.disabled = true;
+  });
+
+  document.querySelectorAll(".time-box button").forEach(function (el) {
+    el.disabled = true;
+  });
+
+  document.getElementById("scanBtn").disabled = true;
+  document.getElementById("addShipmentBtn").disabled = true;
+  document.querySelectorAll("#shipmentTableBody button").forEach(function (el) {
+    el.disabled = true;
+  });
+
+  const palletBtn = document.getElementById("palletLoadingStartTimeBtn");
+  if (palletBtn) palletBtn.disabled = true;
+
+  document.getElementById("saveBtn").disabled = true;
+
+  document.getElementById("printBtn").disabled = false;
+
+}
+
+document.getElementById("printBtn").addEventListener("click", function () {
+
+  window.print();
+
+});
+document.getElementById('recoverDraftToggleBtn').addEventListener('click', function () {
+  const box = document.getElementById('recoverDraftBox');
+  box.style.display = (box.style.display === 'none') ? 'block' : 'none';
+});
+
+document.getElementById('loadRecoverDraftBtn').addEventListener('click', function () {
+
+  const val = document.getElementById('recoverDraftInput').value.trim();
+  if (!val) return;
+
+  google.script.run
+    .withSuccessHandler(function (data) {
+      loadDraftForRecovery(data);
+    })
+    .withFailureHandler(function (err) {
+      alert(err.message);
+    })
+    .getMissionDraftForRecovery(val);
+
+});
+
+function loadDraftForRecovery(data) {
+
+  draftID = data.draftID;
+
+  document.getElementById('date').value = data.date;
+  document.getElementById('shift').value = data.shift;
+  setSelectByTextOrValue('missionType', data.missionType);
+  setSelectByTextOrValue('driver', data.driver);
+  setSelectByTextOrValue('vehicle', data.vehicle);
+  setSelectByTextOrValue('origin', data.origin);
+  setSelectByTextOrValue('destination', data.destination);
+  document.getElementById('startKM').value = data.startKM || '';
+
+  const shipmentSlots = [
+    { no: data.shipmentNo1, product: data.product1, qty: data.quantity1 },
+    { no: data.shipmentNo2, product: data.product2, qty: data.quantity2 },
+    { no: data.shipmentNo3, product: data.product3, qty: data.quantity3 }
+  ];
+
+  shipments = shipmentSlots
+    .filter(function (item) { return !isEmpty(item.no); })
+    .map(function (item) { return { no: item.no, product: item.product, qty: item.qty }; });
+
+  renderShipmentTable();
+
+  document.getElementById('dispatchTime').innerText = data.dispatchTime || '';
+  document.getElementById('arrivalTime').innerText = data.arrivalTime || '';
+  document.getElementById('unloadingStartTime').innerText = data.unloadingStartTime || '';
+  document.getElementById('palletLoadingStartTime').innerText = data.palletLoadingStartTime || '';
+  document.getElementById('returnTime').innerText = data.returnTime || '';
+  document.getElementById('warehouseArrivalTime').innerText = data.warehouseArrivalTime || '';
+
+  if (data.palletCount) {
+    document.getElementById('palletCount').value = data.palletCount;
+  }
+
+  updateFormForMissionType();
+  refreshMissionTimeButtonStates();
+
+  document.getElementById('missionID').innerText = 'در حال ثبت... (پیش‌نویس بازیابی‌شده)';
+
+  document.getElementById('recoverDraftBox').style.display = 'none';
+
+  alert('پیش‌نویس با موفقیت بازیابی شد. می‌توانید ادامه دهید.');
+  flushEverything_();
+}
+
+/************************************************
+ ****** ذخیره‌ی خودکار محلی (Autosave) ******
+ ****** جلوگیری از گم‌شدن فرم با هنگ/بسته‌شدن صفحه ******
+ ************************************************/
+
+function collectAutosaveData_() {
+
+  return {
+    date: document.getElementById('date').value,
+    shift: document.getElementById('shift').value,
+    missionType: document.getElementById('missionType').value,
+    driver: document.getElementById('driver').value,
+    vehicle: document.getElementById('vehicle').value,
+    origin: document.getElementById('origin').value,
+    destination: document.getElementById('destination').value,
+    startKM: document.getElementById('startKM').value,
+    endKM: document.getElementById('endKM').value,
+    delayReason: document.getElementById('delayReason').value,
+    notes: document.getElementById('notes').value,
+    hasPalletReturn: document.getElementById('hasPalletReturn').value,
+    palletCount: document.getElementById('palletCount').value,
+    shipments: shipments,
+    palletNumbers: getPalletNumbers(),
+
+    transferProduct: document.getElementById('transferProductSelect').value,
+    transferQuantity: document.getElementById('transferQuantityInput').value,
+
+    dispatchTime: document.getElementById('dispatchTime').innerText,
+    arrivalTime: document.getElementById('arrivalTime').innerText,
+    unloadingStartTime: document.getElementById('unloadingStartTime').innerText,
+    palletLoadingStartTime: document.getElementById('palletLoadingStartTime').innerText,
+    returnTime: document.getElementById('returnTime').innerText,
+    warehouseArrivalTime: document.getElementById('warehouseArrivalTime').innerText,
+
+    eventDistances: eventDistances,
+    draftID: draftID,
+
+    savedAt: new Date().getTime()
+
+  };
+
+}
+
+function autosaveMissionForm() {
+
+  if (editMode) return;
+
+  try {
+    localStorage.setItem(MISSION_AUTOSAVE_KEY, JSON.stringify(collectAutosaveData_()));
+  } catch (e) {
+    console.error('خطا در ذخیره‌ی خودکار محلی: ' + e.message);
+  }
+
+}
+
+function clearMissionAutosave() {
+  try {
+    localStorage.removeItem(MISSION_AUTOSAVE_KEY);
+  } catch (e) {}
+}
+
+function checkForAutosavedMission() {
+
+  let saved;
+
+  try {
+    const raw = localStorage.getItem(MISSION_AUTOSAVE_KEY);
+    if (!raw) return;
+    saved = JSON.parse(raw);
+  } catch (e) {
+    clearMissionAutosave();
+    return;
+  }
+
+  if (!saved || !saved.savedAt) return;
+
+  const hasContent = saved.date || saved.driver || saved.vehicle ||
+    (saved.shipments && saved.shipments.length > 0) ||
+    saved.dispatchTime;
+
+  if (!hasContent) {
+    clearMissionAutosave();
+    return;
+  }
+
+  const confirmRestore = confirm('یک فرم ماموریت ناتمام از قبل پیدا شد (احتمالاً به‌دلیل بسته‌شدن یا هنگ صفحه). آیا می‌خواهید اطلاعات آن بازیابی شود؟');
+
+   if (confirmRestore) {
+    setTimeout(function () { restoreAutosavedMission_(saved); }, 900);
+  } else {
+    clearMissionAutosave();
+    try {
+      localStorage.removeItem(PENDING_DRAFT_KEY);
+      localStorage.removeItem(SYNC_QUEUE_KEY);
+    } catch (e) {}
+  }
+}
+
+function restoreAutosavedMission_(data) {
+
+  document.getElementById('date').value = data.date || '';
+  document.getElementById('shift').value = data.shift || '';
+  document.getElementById('missionType').value = data.missionType || '';
+  document.getElementById('driver').value = data.driver || '';
+  document.getElementById('vehicle').value = data.vehicle || '';
+  document.getElementById('origin').value = data.origin || '';
+  document.getElementById('destination').value = data.destination || '';
+  document.getElementById('startKM').value = data.startKM || '';
+  document.getElementById('endKM').value = data.endKM || '';
+  document.getElementById('delayReason').value = data.delayReason || '';
+  document.getElementById('notes').value = data.notes || '';
+  document.getElementById('hasPalletReturn').value = data.hasPalletReturn || 'no';
+
+  shipments = data.shipments || [];
+  renderShipmentTable();
+
+  if (data.transferProduct) {
+    document.getElementById('transferProductSelect').value = data.transferProduct;
+  }
+  document.getElementById('transferQuantityInput').value = data.transferQuantity || '';
+
+  document.getElementById('dispatchTime').innerText = data.dispatchTime || '';
+  document.getElementById('arrivalTime').innerText = data.arrivalTime || '';
+  document.getElementById('unloadingStartTime').innerText = data.unloadingStartTime || '';
+  document.getElementById('palletLoadingStartTime').innerText = data.palletLoadingStartTime || '';
+  document.getElementById('returnTime').innerText = data.returnTime || '';
+  document.getElementById('warehouseArrivalTime').innerText = data.warehouseArrivalTime || '';
+
+  eventDistances = data.eventDistances || {};
+   draftID = data.draftID || null;
+
+  // اگر پیش‌نویس هنوز در انتظار ساخت است، جوابش باید به همین فرم وصل شود (نه نادیده گرفته شود)
+  if (!draftID) {
+    const pendingToken = getPendingDraftToken_();
+    if (pendingToken) currentFormSessionId_ = pendingToken;
+  }
+
+  if (data.palletCount) {
+    document.getElementById('palletCount').value = data.palletCount;
+    createPalletRows(Number(data.palletCount));
+    document.getElementById('palletNumbersSection').style.display = 'block';
+  }
+
+  if (data.palletNumbers && data.palletNumbers.length > 0) {
+    data.palletNumbers.forEach(function (val, index) {
+      const no = String(index + 1).padStart(2, '0');
+      const input = document.getElementById('palletNo' + no);
+      if (input) input.value = val;
+    });
+  }
+
+  updateFormForMissionType();
+  refreshMissionTimeButtonStates();
+
+  alert('اطلاعات فرم ناتمام با موفقیت بازیابی شد. می‌توانید ادامه دهید.');
+  flushEverything_();
+}
+
+/************************************************
+ ****** صف همگام‌سازی آفلاین (Sync Queue) ******
+ ****** فیلدهای زمانیِ ثبت‌شده در حالت بی‌اینترنتی، اینجا نگه‌ داشته می‌شوند تا با اتصال مجدد، خودکار ارسال شوند ******
+ ************************************************/
+
+const SYNC_QUEUE_KEY = "kpt_mission_sync_queue";
+
+function getSyncQueue_() {
+  try {
+    return JSON.parse(localStorage.getItem(SYNC_QUEUE_KEY) || "[]");
+  } catch (e) { return []; }
+}
+
+function setSyncQueue_(queue) {
+  localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(queue));
+}
+
+function addToSyncQueue_(draftIdVal, fields) {
+  const queue = getSyncQueue_();
+  Object.keys(fields).forEach(function (field) {
+    const existing = queue.find(function (q) { return q.draftID === draftIdVal && q.field === field; });
+    if (existing) {
+      existing.value = fields[field];
+    } else {
+      queue.push({ draftID: draftIdVal, field: field, value: fields[field], ts: Date.now() });
+    }
+  });
+  setSyncQueue_(queue);
+}
+
+function removeFromSyncQueue_(draftIdVal, field) {
+  let queue = getSyncQueue_();
+  queue = queue.filter(function (q) { return !(q.draftID === draftIdVal && q.field === field); });
+  setSyncQueue_(queue);
+}
+
+// شناسه‌ی موقت "PENDING" رو، به‌محض ساخته‌شدن draftID واقعی، با اون جایگزین می‌کنه
+function remapPendingQueueToDraftID_(realDraftID) {
+  const queue = getSyncQueue_();
+  let changed = false;
+  queue.forEach(function (q) {
+    if (q.draftID === "PENDING") {
+      q.draftID = realDraftID;
+      changed = true;
+    }
+  });
+  if (changed) setSyncQueue_(queue);
+}
+
+let syncInProgress_ = false;
+
+// فقط آیتم‌هایی رو پردازش می‌کنه که draftID واقعی دارن (نه "PENDING")
+// چون تابع سرور updateMissionDraftFieldsAndNotify برای draftID نامعتبر خطا نمی‌ده،
+// فقط لاگ می‌زنه و برمی‌گرده -> اگه اینجا فیلتر نشه، اون فیلد به‌اشتباه "موفق" حساب می‌شه و از صف پاک می‌شه
+function flushSyncQueue_(onDone) {
+
+  if (syncInProgress_) {
+    if (typeof onDone === 'function') onDone();
+    return;
+  }
+
+  const queue = getSyncQueue_().filter(function (q) { return q.draftID !== "PENDING"; });
+
+  if (queue.length === 0) {
+    if (typeof onDone === 'function') onDone();
+    return;
+  }
+
+  syncInProgress_ = true;
+  const item = queue[0];
+  const fields = {};
+  fields[item.field] = item.value;
+
+  let settled = false;
+
+  // اگه ظرف ۱۲ ثانیه جواب (موفق یا ناموفق) نیومد، فرض می‌کنیم درخواست معلق مونده
+  // و قفل رو باز می‌کنیم تا تلاش بعدی (توسط تایمر) گیر نکنه
+  const timeoutId = setTimeout(function () {
+    if (settled) return;
+    settled = true;
+    syncInProgress_ = false;
+    if (typeof onDone === 'function') onDone();
+  }, 12000);
+
+  google.script.run
+    .withSuccessHandler(function () {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutId);
+      removeFromSyncQueue_(item.draftID, item.field);
+      syncInProgress_ = false;
+      flushSyncQueue_(onDone);
+    })
+    .withFailureHandler(function () {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutId);
+      syncInProgress_ = false;
+      if (typeof onDone === 'function') onDone();
+    })
+    .updateMissionDraftFieldsAndNotify(item.draftID, fields);
+
+}
+
+// نقطه‌ی ورود اصلی برای هر تلاش همگام‌سازی:
+// اول سعی می‌کنه (اگه لازم بود) Draft رو بسازه، بعد صف فیلدهای زمانی رو خالی می‌کنه
+function flushEverything_(onDone) {
+  tryCreateMissionDraft_(function () {
+    flushSyncQueue_(onDone);
+  });
+}
+
+// تلاش دوره‌ای مستقل از رویداد online، چون قطعی سیگنال موبایل معمولاً این رویداد رو صدا نمی‌زنه
+setInterval(function () { flushEverything_(); }, 15000);
+
+window.addEventListener('online', function () { flushEverything_(); });
+
+function getPendingDraftToken_() {
+  try {
+    const raw = localStorage.getItem(PENDING_DRAFT_KEY);
+    return raw ? (JSON.parse(raw).clientToken || "") : "";
+  } catch (e) {
+    return "";
+  }
+}
+
+// حذف فیلدهای زمانیِ در صفی که هنوز به هیچ پیش‌نویسی وصل نشده‌اند
+function removePendingSyncItems_() {
+  const queue = getSyncQueue_().filter(function (q) { return q.draftID !== "PENDING"; });
+  setSyncQueue_(queue);
+}
+
+</script>
+
+</body>
+
+</html>

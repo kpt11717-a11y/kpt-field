@@ -92,7 +92,7 @@ function showHome(s) {
   $('uName').textContent = s.user.fullName; $('uJob').textContent = s.user.jobTitle ? '(' + s.user.jobTitle + ')' : '';
   var tiles = [];
   if (s.rcv) tiles.push('<a class="tile" href="rcv.html"><div class="ic">📦</div><div><b>ماموریت جمع‌آوری قطعات</b><span>تیم دریافت — شمارش در انبار مشتری</span></div></a>');
-  // جای ماموریت رانندگان (تیم ارسال) — بعداً اضافه می‌شود
+  if (s.snd) tiles.push('<a class="tile" href="snd.html"><div class="ic">🚚</div><div><b>ماموریت رانندگان</b><span>تیم ارسال — اعزام، تخلیه، برگشت پالت</span></div></a>');
   $('tiles').innerHTML = tiles.join('') || '<div class="warn">برای این کاربر ماموریتی تعریف نشده است.</div>';
   $('relogin').classList.toggle('hidden', !s.stale);
   netUi();
@@ -105,7 +105,14 @@ function showHome(s) {
   // اگر اینترنت بود، اعتبار ورود بی‌صدا بررسی می‌شود (بدون اینترنت چیزی عوض نمی‌شود)
   if (s.rcv && navigator.onLine) {
     KPT.call(CFG.rcvApi, 'authPing', [s.rcv.token]).then(function (r) {
-      s.user = r.user; s.rcv.access = r.access; s.stale = false; KPT.saveSession(s); showHome(s);
+      s.rcv.access = r.access; KPT.saveSession(s); showHome(s);
+    }, function (e) {
+      if (String(e.message).indexOf('SESSION_INVALID') === 0) { s.stale = true; KPT.saveSession(s); showHome(s); }
+    });
+  }
+  if (s.snd && CFG.sndApi && navigator.onLine) {
+    KPT.call(CFG.sndApi, 'fieldSendPing', [], s.snd.token).then(function (r) {
+      s.snd.pages = r.pages; KPT.saveSession(s); sendHubUser_(s); showHome(s);
     }, function (e) {
       if (String(e.message).indexOf('SESSION_INVALID') === 0) { s.stale = true; KPT.saveSession(s); showHome(s); }
     });
@@ -118,19 +125,37 @@ $('loginBtn').addEventListener('click', function () {
   $('loginErr').style.display = 'none';
   if (!navigator.onLine) { showLogin('برای ورود بار اول اینترنت لازم است.'); return; }
   btn.disabled = true; btn.textContent = 'در حال ورود…';
-  KPT.call(CFG.rcvApi, 'fieldLogin', [code, pass]).then(function (r) {
-    var s = { user: r.user, rcv: { token: r.token, access: r.access }, at: Date.now() };
-    KPT.saveSession(s);
-    try { localStorage.setItem('kpt_rcv_last_user', JSON.stringify({ userID: r.user.userID, fullName: r.user.fullName, jobTitle: r.user.jobTitle })); } catch (e) {}
-    btn.disabled = false; btn.textContent = 'ورود'; $('password').value = '';
+  // یک ورود برای هر دو تیم: هر سروری که این کاربر در آن دسترسی ماموریت دارد
+  var tries = [KPT.call(CFG.rcvApi, 'fieldLogin', [code, pass])];
+  if (CFG.sndApi) tries.push(KPT.call(CFG.sndApi, 'fieldSendLogin', [code, pass]));
+  Promise.all(tries.map(function (p) { return p.then(function (r) { return { ok: r }; }, function (e) { return { err: e.message }; }); })).then(function (res) {
+    btn.disabled = false; btn.textContent = 'ورود';
+    var r1 = res[0], r2 = res[1] || { err: '' };
+    if (!r1.ok && !r2.ok) {
+      var msgs = [r1.err, r2.err].filter(function (m) { return m && m.indexOf('دسترسی ندارید') === -1; });
+      showLogin(msgs[0] || 'این کاربر به هیچ فرم ماموریتی دسترسی ندارد.'); return;
+    }
+    var base = (r1.ok || r2.ok).user;
+    var s = { user: { userID: base.userID || '', userCode: base.userCode || code, fullName: base.fullName, jobTitle: base.jobTitle }, at: Date.now() };
+    if (r1.ok) {
+      s.rcv = { token: r1.ok.token, access: r1.ok.access };
+      try { localStorage.setItem('kpt_rcv_last_user', JSON.stringify({ userID: r1.ok.user.userID, fullName: r1.ok.user.fullName, jobTitle: r1.ok.user.jobTitle })); } catch (e) {}
+    }
+    if (r2.ok) s.snd = { token: r2.ok.token, pages: r2.ok.pages, driverID: r2.ok.user.driverID || '' };
+    KPT.saveSession(s); sendHubUser_(s);
+    $('password').value = '';
     showHome(s);
-  }, function (e) {
-    btn.disabled = false; btn.textContent = 'ورود'; showLogin(e.message);
   });
 });
+// فرم رانندگان کاربر را از این کلید می‌شناسد (مثل وقتی از هاب باز می‌شود)
+function sendHubUser_(s) {
+  if (!s.snd) return;
+  try { localStorage.setItem('kpt_hub_user', JSON.stringify({ success: true, userCode: s.user.userCode, fullName: s.user.fullName, role: s.user.jobTitle, driverID: s.snd.driverID, pages: s.snd.pages })); } catch (e) {}
+}
 $('logoutBtn').addEventListener('click', function () {
   var pend = 0;
   try { Object.keys(localStorage).forEach(function (k) { if (k.indexOf('kpt_rcv_v1_') === 0) { var d = JSON.parse(localStorage.getItem(k)); pend += (d && d.queue || []).length; } }); } catch (e) {}
+  try { pend += JSON.parse(localStorage.getItem('kpt_mission_sync_queue') || '[]').length + (localStorage.getItem('kpt_mission_pending_draft') ? 1 : 0); } catch (e) {}
   if (pend && !confirm(pend + ' ثبت هنوز به سرور نرسیده است. با خروج پاک نمی‌شوند و بعد از ورود دوباره ارسال می‌شوند. خارج می‌شوید؟')) return;
   KPT.saveSession(null); showLogin();
 });
