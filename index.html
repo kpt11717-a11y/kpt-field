@@ -145,6 +145,10 @@ $('loginBtn').addEventListener('click', function () {
     KPT.saveSession(s); sendHubUser_(s);
     $('password').value = '';
     showHome(s);
+    // اگر ورود به یکی از دو سرور با خطای غیر از «دسترسی ندارید» ناموفق بود، نشان داده شود
+    var warn = [[r1, 'تیم دریافت'], [r2, 'تیم ارسال']].filter(function (x) { return !x[0].ok && x[0].err && x[0].err.indexOf('دسترسی ندارید') === -1; })
+      .map(function (x) { return 'اتصال به ' + x[1] + ' برقرار نشد: ' + x[0].err; });
+    if (warn.length) { $('relogin').textContent = warn.join(' — '); $('relogin').classList.remove('hidden'); }
   });
 });
 // فرم رانندگان کاربر را از این کلید می‌شناسد (مثل وقتی از هاب باز می‌شود)

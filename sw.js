@@ -1,6 +1,6 @@
 /* Service Worker — فایل‌های برنامه را روی گوشی نگه می‌دارد تا بدون اینترنت هم باز شود.
    با هر نسخه‌ی جدید، عدد VERSION را یکی بالا ببرید. */
-var VERSION = 'kpt-field-v5';
+var VERSION = 'kpt-field-v6';
 var FILES = ['./', 'index.html', 'rcv.html', 'snd.html', 'config.js', 'api.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'icon-maskable.png', 'logo.png', 'app-logo.png'];
 
 self.addEventListener('install', function (e) {
