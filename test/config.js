@@ -5,5 +5,5 @@ window.KPT_CONFIG = {
   // آدرس Web App هاب دریافت (همان آدرسی که آخرش /exec است)
   rcvApi: 'https://script.google.com/macros/s/AKfycbxdMosPwOu9slrw2EbVSygmmyStp11Vb1PTFUtqEEo44wb0TnetvKvsFJNzWsFTBVhQug/exec',
   // آدرس Web App هاب ارسال (برای فرم ماموریت رانندگان)
-  sndApi: 'اینجا_آدرس_exec_پروژه‌ی_کپی_ارسال'
+  sndApi: 'https://script.google.com/macros/s/AKfycbzttLldLgBTRiiTL9pMuDiXYmlAHdGhdhsmArQgnZTFHV85GXKr9lP-IXApcJS_iKFU/exec'
 };
