@@ -1,6 +1,6 @@
 {
-  "name": "KPT میدانی — آزمایشی",
-  "short_name": "KPT آزمایشی",
+  "name": "KPT Logistics — میدانی",
+  "short_name": "KPT میدانی",
   "description": "ماموریت‌های میدانی شرکت قوای محرکه کرمان خودرو — کار بدون اینترنت",
   "lang": "fa",
   "dir": "rtl",
@@ -28,6 +28,5 @@
       "type": "image/png",
       "purpose": "maskable"
     }
-  ],
-  "id": "test/"
+  ]
 }

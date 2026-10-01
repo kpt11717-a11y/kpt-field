@@ -14,7 +14,7 @@
         .then(function (j) {
           if (!j || !j.ok) {
             var m = (j && j.error) || 'خطای سرور';
-            if (m === 'SESSION_INVALID') m = 'SESSION_INVALID — ورود شما منقضی شده؛ از صفحه‌ی خانه دوباره وارد شوید.';
+            if (m === 'SESSION_INVALID') m = 'SESSION_INVALID — با این کاربر از دستگاه دیگری وارد شده‌اند؛ برای ادامه در این دستگاه، از صفحه‌ی خانه دوباره وارد شوید.';
             throw new Error(m);
           }
           return j.result;
