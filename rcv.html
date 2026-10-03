@@ -101,6 +101,13 @@
   .sync-bar button{background:rgba(255,255,255,.18);padding:3px 10px;font-size:11.5px}
   .toast{position:fixed;bottom:44px;left:12px;right:12px;max-width:600px;margin:0 auto;padding:10px 14px;border-radius:8px;font-weight:bold;z-index:30;color:#fff}
   .toast.ok{background:#3f8f6b} .toast.bad{background:#c0564b} .toast.warn{background:#c7811d}
+  .fin-modal{position:fixed;inset:0;background:rgba(20,25,35,.72);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
+  .fin-card{background:#fff;border-radius:16px;padding:24px 20px;width:100%;max-width:440px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.35)}
+  .fin-card .fi{font-size:50px;line-height:1.2} .fin-card .ft{font-size:20px;font-weight:bold;margin:8px 0 10px} .fin-card .fs{font-size:14px;line-height:2;color:#333}
+  .fin-card button{width:100%;margin-top:12px;padding:13px;font-size:15px;border-radius:10px}
+  .fin-card.ok{border-top:8px solid #3f8f6b} .fin-card.ok .ft{color:#3f8f6b}
+  .fin-card.fail{border:4px solid #c0564b} .fin-card.fail .ft{color:#c0564b} .fin-card.busy .ft{color:#4f7ca8}
+  .fin-card .ferr{font-size:12px;color:#6b7785;margin-top:6px;direction:auto}
   .hidden{display:none !important}
   /* لیست برداشت (بدون تعداد) */
   .pick-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
@@ -227,10 +234,11 @@
     <div id="shortSection" class="hidden">
       <h3>کنترل کسری (شمارش دوم با حضور نماینده انبار مشتری)</h3>
       <p class="note">ردیف‌هایی که «باقی مانده» دارند با حضور نماینده‌ی انبار مشتری دوباره شمرده می‌شوند (اگر شمارش دوم با اول برابر نبود، شمارش سوم لازم است).
-        در شمارش دوم/سوم <b>کل تعداد فیزیکی</b> را بزنید (همراه با هر چیزی که انبار مشتری بعد از اعلام کسری تحویل داد). تعداد تحویل تکمیلی را جدا در ستون خودش بنویسید؛ فقط برای بایگانی است و دوباره جمع نمی‌شود. اگر آخرین شمارش به تعداد لیست برسد، کسری برطرف می‌شود و علت لازم نیست.</p>
+        در شمارش دوم/سوم فقط <b>همان اجناس کارتن</b> را بشمارید. اگر انباردار مشتری بعد از اعلام کسری چیزی تحویل داد (مثلاً از ذخیره‌ی خودش)، تعدادش را در ستون «تحویل تکمیلی» بنویسید.
+        <b>مقدار نهایی = آخرین شمارش + تحویل تکمیلی.</b> اگر مقدار نهایی به تعداد لیست برسد، کسری برطرف می‌شود و علت لازم نیست.</p>
       <div class="form-row"><div class="form-group" style="max-width:360px"><label>نام نماینده‌ی انبار مشتری (حاضر در شمارش دوم)</label><input type="text" id="custRep"></div></div>
       <div class="tbl"><table class="grid" style="min-width:900px">
-        <thead><tr><th>ردیف</th><th>شماره فنی</th><th>کیس / کارتن</th><th>تعداد کل</th><th>شمارش اول</th><th>باقی مانده</th><th>شمارش دوم</th><th>شمارش سوم</th><th>تحویل تکمیلی (بایگانی)</th><th>کسری نهایی</th><th>علت کسری</th></tr></thead>
+        <thead><tr><th>ردیف</th><th>شماره فنی</th><th>کیس / کارتن</th><th>تعداد کل</th><th>شمارش اول</th><th>باقی مانده</th><th>شمارش دوم</th><th>شمارش سوم</th><th>تحویل تکمیلی (+)</th><th>مقدار نهایی / کسری</th><th>علت کسری</th></tr></thead>
         <tbody id="shortBody"></tbody>
       </table></div>
       <div id="rcMsg"></div>
@@ -333,7 +341,7 @@ function MAN() { return P().header.source === 'MANUAL'; }
 function boxLbl(r) { return (r.cs || r.bx) ? 'کیس ' + r.cs + ' / کارتن ' + r.bx : ''; }
 function boxCell(r) { return (r.cs || r.bx) ? esc(r.cs) + ' / ' + esc(r.bx) : '—'; }
 function refOf(h, lot) { return h.ref || ('lot ' + (lot == null ? h.lotNo : lot)); }
-function closed() { var s = MS().status; return s === 'CLOSED' || s === 'SHORTAGE_PENDING' || s === 'TRANSFERRED'; }
+function closed() { var s = MS().status; return s === 'CLOSED' || s === 'SHORTAGE_PENDING' || s === 'TRANSFERRED' || s === 'GONE'; }
 
 /* ---------------- صف ارسال ---------------- */
 function enqueue(item) {
@@ -358,11 +366,13 @@ function pump() {
   google.script.run
     .withSuccessHandler(function (res) {
       inflight = false; lastErr = ''; nextTry = 0;
-      if (res.transferred) {                                          // سرپرست ماموریت را به فرد دیگری سپرده است
+      if (res.transferred || res.gone) {                              // ماموریت به فرد دیگری سپرده شده یا روی سرور حذف شده است
         var tm = first.missionID, ts = DB.st[tm];
         DB.queue = DB.queue.filter(function (q) { return q.missionID !== tm; });
-        if (ts) { ts.status = 'TRANSFERRED'; ts.transferredTo = res.collectorName || ''; }
-        save(); syncUi(); toast('ماموریت ' + tm + ' به ' + (res.collectorName || 'فرد دیگری') + ' منتقل شده است؛ از این گوشی دیگر قابل ثبت نیست.', 'warn');
+        if (ts) { ts.status = res.gone ? 'GONE' : 'TRANSFERRED'; ts.transferredTo = res.collectorName || ''; }
+        save(); syncUi();
+        toast(res.gone ? 'ماموریت ' + tm + ' روی سرور وجود ندارد (حذف یا برگشت داده شده)؛ ثبت‌های آن از صف این گوشی پاک شد.' :
+          'ماموریت ' + tm + ' به ' + (res.collectorName || 'فرد دیگری') + ' منتقل شده است؛ از این گوشی دیگر قابل ثبت نیست.', 'warn');
         if (DB.active === tm && !$('formSection').classList.contains('hidden')) renderAll(); else renderQueue();
         if (DB.queue.length) kick();
         return;
@@ -383,15 +393,18 @@ function pump() {
 }
 setInterval(pump, 5000);
 window.addEventListener('online', function () { nextTry = 0; kick(); });
+// برگشت به برنامه (از پس‌زمینه یا قفل گوشی): همان لحظه ارسال صف
+document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') { nextTry = 0; kick(); } });
 $('syncNow').addEventListener('click', function () { nextTry = 0; kick(); });
 
+function isNetErr(m) { return /network|http 0|failed to fetch|timeout|timed out|connection|اینترنت/i.test(String(m || '')); }
 function pendingIds() { var o = {}; (DB.queue || []).forEach(function (q) { o[q.item.id] = 1; }); return o; }
 function syncUi() {
   if (!DB) return;
   var n = DB.queue.length, t;
   if (!n) t = '✔ همه‌ی ثبت‌ها به سرور رسید' + (DB.lastSync ? ' (آخرین ارسال ' + fmtTime(DB.lastSync) + ')' : '');
   else if (inflight) t = '⏳ در حال ارسال ' + n + ' مورد…';
-  else if (lastErr) t = '✖ ارسال نشد (اینترنت) — ' + n + ' مورد روی گوشی در صف است و خودکار دوباره فرستاده می‌شود';
+  else if (lastErr) t = (isNetErr(lastErr) ? '✖ ارسال نشد (اینترنت)' : '✖ ارسال نشد — خطای سرور: ' + lastErr) + ' — ' + n + ' مورد روی گوشی در صف است و خودکار دوباره فرستاده می‌شود';
   else t = '⏳ ' + n + ' مورد در صف ارسال';
   $('syncText').textContent = t;
 }
@@ -438,7 +451,7 @@ function startApp(u, online) {
 }
 
 /* ---------------- ۱) ماموریت‌های من ---------------- */
-var ST_LBL = { ASSIGNED: 'تخصیص‌یافته', STARTED: 'در حال انجام', CLOSED: 'بسته شد', SHORTAGE_PENDING: 'بسته شد — کسری در انتظار تأیید', TRANSFERRED: '🔁 به فرد دیگری منتقل شد' };
+var ST_LBL = { ASSIGNED: 'تخصیص‌یافته', STARTED: 'در حال انجام', CLOSED: 'بسته شد', SHORTAGE_PENDING: 'بسته شد — کسری در انتظار تأیید', TRANSFERRED: '🔁 به فرد دیگری منتقل شد', GONE: '🗑 روی سرور حذف شده' };
 function renderQueue() {
   var ids = Object.keys(DB.pkgs);
   $('queueList').innerHTML = ids.length ? '<p class="note"><b>روی این گوشی (بدون اینترنت هم باز می‌شود):</b></p>' + ids.map(function (id) {
@@ -447,7 +460,7 @@ function renderQueue() {
     return '<div class="queue-item" data-m="' + esc(id) + '"><b>ماموریت ' + esc(id) + '</b> — شماره ' + esc(p.header.docNo) + ' — ' + esc(p.header.warehouseName) +
       ' — ' + esc(refOf(p.header)) + ' — ' + p.rows.length + (p.header.source === 'MANUAL' ? ' قلم — ' : ' کارتن — ') + (ST_LBL[s.status] || s.status) +
       (pend ? ' — <span class="q wait">⏳ ' + pend + ' مورد در صف</span>' : '') +
-      ((done || s.status === 'TRANSFERRED') ? ' <button type="button" data-rmpkg="' + esc(id) + '" style="background:#6b7785;padding:1px 8px;font-size:11px">حذف از گوشی</button>' : '') + '</div>';
+      ((done || s.status === 'TRANSFERRED' || s.status === 'GONE') ? ' <button type="button" data-rmpkg="' + esc(id) + '" style="background:#6b7785;padding:1px 8px;font-size:11px">حذف از گوشی</button>' : '') + '</div>';
   }).join('') : '';
   document.querySelectorAll('[data-m]').forEach(function (el) {
     el.addEventListener('click', function (e) { if (e.target.getAttribute('data-rmpkg')) return; DB.active = el.getAttribute('data-m'); save(); openForm(); });
@@ -502,7 +515,7 @@ $('changeBtn').addEventListener('click', function () {
 function openForm() {
   var p = P(), h = p.header, s = MS();
   $('queueSection').classList.add('hidden'); $('formSection').classList.remove('hidden');
-  $('selLabel').textContent = p.missionID + ' — شماره ' + h.docNo + ' — ' + h.warehouseName + (s.status === 'TRANSFERRED' ? ' — 🔁 منتقل شد به ' + (s.transferredTo || 'فرد دیگر') + ' (فقط خواندنی)' : '');
+  $('selLabel').textContent = p.missionID + ' — شماره ' + h.docNo + ' — ' + h.warehouseName + (s.status === 'TRANSFERRED' ? ' — 🔁 منتقل شد به ' + (s.transferredTo || 'فرد دیگر') + ' (فقط خواندنی)' : s.status === 'GONE' ? ' — 🗑 روی سرور حذف شده (فقط خواندنی)' : '');
   $('hDocNo').textContent = h.docNo; $('hDate').textContent = h.docDate; $('hRelDate').textContent = h.releaseDate; $('hRelTime').textContent = h.releaseTime;
   $('hProduct').textContent = h.productName; $('hPack').textContent = h.packNo; $('hLot').textContent = h.source === 'MANUAL' ? h.refDocNo : h.lotNo;
   $('hLot').previousElementSibling.textContent = h.source === 'MANUAL' ? 'برگ درخواست دستی:' : 'شماره lot:';
@@ -796,11 +809,11 @@ function renderCompare() {
   });
 }
 function shortRows() { return rows().filter(function (r) { var c = counted(r.no); return c == null || c < r.total; }); }
-// مقدار نهایی یک ردیف کسری = آخرین شمارش ثبت‌شده (سوم، وگرنه دوم، وگرنه اول)
-// شمارش دوم/سوم «کل موجودی فیزیکی» است و تحویل تکمیلی را هم در بر دارد؛ عدد تحویل تکمیلی فقط برای بایگانی ثبت می‌شود
+// مقدار نهایی یک ردیف کسری = آخرین شمارش ثبت‌شده (سوم، وگرنه دوم، وگرنه اول) + تحویل تکمیلی
+// شمارش دوم/سوم فقط اجناس خود کارتن است؛ تحویل تکمیلی (مثلاً از ذخیره‌ی انباردار مشتری) جدا ثبت و جمع می‌شود
 function finalOf(r) {
   var c1 = counted(r.no) || 0, x = MS().recount[r.no] || {};
-  return r3(x.c3 != null ? x.c3 : (x.c2 != null ? x.c2 : c1));
+  return r3((x.c3 != null ? x.c3 : (x.c2 != null ? x.c2 : c1)) + (x.sp > 0 ? x.sp : 0));
 }
 function unresolvedRows() { return shortRows().filter(function (r) { return finalOf(r) < r.total; }); }
 function renderShort() {
@@ -821,7 +834,7 @@ function renderShort() {
       '<td><input type="number" step="any" inputmode="' + (MAN() ? 'decimal' : 'numeric') + '" data-c2="' + r.no + '" value="' + (x.c2 == null ? '' : x.c2) + '"' + dis + '></td>' +
       '<td>' + (need3 ? '<input type="number" step="any" inputmode="' + (MAN() ? 'decimal' : 'numeric') + '" data-c3="' + r.no + '" value="' + (x.c3 == null ? '' : x.c3) + '"' + dis + '>' : '—') + '</td>' +
       '<td><input type="number" step="any" min="0" inputmode="' + (MAN() ? 'decimal' : 'numeric') + '" data-sp="' + r.no + '" value="' + (x.sp ? x.sp : '') + '" placeholder="0"' + dis + '></td>' +
-      (function () { var rem = r3(r.total - finalOf(r)); return rem > 0 ? '<td class="rem pos">' + rem + '</td>' : '<td style="color:#3f8f6b;font-weight:bold">✔ برطرف شد</td>'; })() +
+      (function () { var f = finalOf(r), rem = r3(r.total - f); return '<td>' + f + ' — ' + (rem > 0 ? '<span class="rem pos">کسری ' + rem + '</span>' : rem < 0 ? '<span class="rem neg">اضافه ' + (-rem) + '</span>' : '<span style="color:#3f8f6b;font-weight:bold">✔ برطرف شد</span>') + '</td>'; })() +
       '<td>' + (finalOf(r) >= r.total ? '—' : '<select data-rs="' + r.no + '" style="min-width:150px"' + dis + '><option value="">انتخاب کنید</option>' +
       REASONS.map(function (t) { return '<option' + (x.reason === t ? ' selected' : '') + '>' + t + '</option>'; }).join('') + '</select>') + '</td></tr>';
   }).join('');
@@ -895,17 +908,71 @@ $('closeBtn').addEventListener('click', function () {
   var idx = TIMES.map(function (t) { return t.key; }).indexOf('EXIT_DOC');
   if (MS().times.EXIT_DOC) doClose(); else recordTime(idx, document.querySelector('[data-t="' + idx + '"]'));
 });
+// ثبت نهایی فقط آنلاین: اول همه‌ی ثبت‌های صفِ این ماموریت به سرور می‌رسد، بعد بستن ماموریت مستقیم ارسال و تأیید می‌شود.
+// تا جواب «ثبت شد» از سرور نیاید، ماموریت روی گوشی باز می‌ماند (در صف گذاشته نمی‌شود).
+function finModal(kind, title, text, err) {
+  var m = $('finModal');
+  if (!m) { m = document.createElement('div'); m.id = 'finModal'; m.className = 'fin-modal'; document.body.appendChild(m); }
+  if (!kind) { m.classList.add('hidden'); return; }
+  m.classList.remove('hidden');
+  var ico = { busy: '⏳', ok: '✅', fail: '⛔' }[kind];
+  m.innerHTML = '<div class="fin-card ' + kind + '"><div class="fi">' + ico + '</div><div class="ft">' + esc(title) + '</div><div class="fs">' + text + '</div>' +
+    (err ? '<div class="ferr">' + esc(err) + '</div>' : '') +
+    (kind === 'fail' ? '<button type="button" id="finRetry">🔁 دوباره تلاش کن</button><button type="button" class="sec" id="finClose">بستن (ماموریت باز می‌ماند)</button>' : '') +
+    (kind === 'ok' ? '<button type="button" id="finClose">باشه</button>' : '') + '</div>';
+  if ($('finRetry')) $('finRetry').onclick = function () { doClose(); };
+  if ($('finClose')) $('finClose').onclick = function () { finModal(null); };
+  if (kind === 'fail') { try { navigator.vibrate && navigator.vibrate([300, 150, 300, 150, 300]); } catch (e) {} }
+}
+var closing = false;
 function doClose() {
-  var s = MS();
-  if (closed()) return;
-  var recount = {}, overNotes = {};
-  shortRows().forEach(function (r) { var x = s.recount[r.no] || {}; recount[r.no] = { c2: x.c2, c3: x.c3 == null ? null : x.c3, sp: x.sp || 0, reason: finalOf(r) < r.total ? x.reason : '' }; });
-  rows().forEach(function (r) { var x = s.rows[r.no]; if (x && x.overNote) overNotes[r.no] = x.overNote; });
-  s.status = unresolvedRows().length ? 'SHORTAGE_PENDING' : 'CLOSED';
-  enqueue({ type: 'CLOSE', exitDocNo: s.exitNo, recount: recount, overNotes: overNotes, customerRep: s.custRep || '', mismatchNote: s.info.description || '' });
-  save();
-  toast(s.status === 'CLOSED' ? 'ماموریت ثبت نهایی شد.' : 'ثبت نهایی شد — کسری برای تأیید سرپرست ارسال می‌شود.', s.status === 'CLOSED' ? 'ok' : 'warn');
-  renderAll();
+  var s = MS(), mid = DB.active;
+  if (closed() || closing) return;
+  closing = true;
+  var fail = function (msg, err) {
+    closing = false;
+    finModal('fail', 'ثبت نهایی انجام نشد!', msg + '<br><b>ماموریت هنوز باز است و ثبت نهایی نشده.</b> اطلاعات روی گوشی محفوظ است؛ وقتی اینترنت وصل شد «دوباره تلاش کن» را بزنید.', err);
+  };
+  finModal('busy', 'در حال ارسال اطلاعات…', 'اول همه‌ی ثبت‌های این ماموریت به سرور فرستاده می‌شود، بعد ماموریت بسته می‌شود. لطفاً صفحه را نبندید.');
+  // ۱) خالی شدن صف این ماموریت
+  var deadline = Date.now() + 60000;
+  nextTry = 0; kick();
+  (function wait() {
+    var left = DB.queue.filter(function (q) { return q.missionID === mid; }).length;
+    if (!left) return sendClose();
+    if (!inflight && lastErr && Date.now() > deadline - 45000) return fail('ثبت‌های قبلی (' + left + ' مورد) هنوز به سرور نرسیده است.', lastErr);
+    if (Date.now() > deadline) return fail('ارسال ثبت‌های قبلی (' + left + ' مورد) طول کشید.', lastErr);
+    if (!inflight) { nextTry = 0; kick(); }
+    setTimeout(wait, 700);
+  })();
+  // ۲) ارسال مستقیم بستن ماموریت و صبر برای تأیید سرور
+  function sendClose() {
+    var recount = {}, overNotes = {};
+    shortRows().forEach(function (r) { var x = s.recount[r.no] || {}; recount[r.no] = { c2: x.c2, c3: x.c3 == null ? null : x.c3, sp: x.sp || 0, reason: finalOf(r) < r.total ? x.reason : '' }; });
+    rows().forEach(function (r) { var x = s.rows[r.no]; if (x && x.overNote) overNotes[r.no] = x.overNote; });
+    DB.seq++;
+    var item = { type: 'CLOSE', id: ME.userID + '-' + mid + '-' + DB.seq + '-' + Date.now(), at: nowSrv(), exitDocNo: s.exitNo, recount: recount, overNotes: overNotes,
+                 customerRep: s.custRep || '', mismatchNote: s.info.description || '' };
+    save();
+    var done = false, timer = setTimeout(function () { if (done) return; done = true; fail('سرور جواب نداد (اینترنت ضعیف).', ''); }, 45000);
+    google.script.run
+      .withSuccessHandler(function (res) {
+        if (done) return; done = true; clearTimeout(timer); closing = false;
+        if (res && res.gone) { s.status = 'GONE'; DB.queue = DB.queue.filter(function (q) { return q.missionID !== mid; }); save(); finModal('fail', 'این ماموریت روی سرور وجود ندارد', 'ماموریت ' + esc(mid) + ' حذف یا برگشت داده شده است و قابل ثبت نهایی نیست. با سرپرست تماس بگیرید.'); renderAll(); return; }
+        if (res && res.transferred) { s.status = 'TRANSFERRED'; s.transferredTo = res.collectorName || ''; save(); finModal(null); renderAll(); toast('این ماموریت به ' + (res.collectorName || 'فرد دیگری') + ' منتقل شده است.', 'warn'); return; }
+        if (!res || (res.acked || []).indexOf(item.id) === -1) return fail('سرور ثبت نهایی را تأیید نکرد.', '');
+        s.status = unresolvedRows().length ? 'SHORTAGE_PENDING' : 'CLOSED';
+        if (res.serverNow) DB.offset = res.serverNow - Date.now();
+        DB.lastSync = Date.now();
+        save(); renderAll(); syncUi();
+        finModal('ok', 'ماموریت ثبت نهایی شد', s.status === 'CLOSED' ? 'همه‌ی اطلاعات به سرور رسید و ماموریت بسته شد.' : 'همه‌ی اطلاعات به سرور رسید. ماموریت بسته شد و کسری‌ها برای تأیید سرپرست ارسال شد.');
+      })
+      .withFailureHandler(function (e) {
+        if (done) return; done = true; clearTimeout(timer);
+        fail(isNetErr(errText(e)) ? 'ارتباط با سرور برقرار نشد (اینترنت).' : 'سرور خطا داد.', errText(e));
+      })
+      .rcvSync({ missionID: mid, missionKey: P().missionKey, items: [item] });
+  }
 }
 </script>
 </body>

@@ -1,6 +1,6 @@
 /* تنظیمات برنامه‌ی میدانی KPT — فقط همین فایل را در صورت تغییر آدرس سرور عوض کنید */
 window.KPT_CONFIG = {
-  version: '1.4.0',
+  version: '1.4.1',
   storePrefix: '',   // نسخه‌ی آزمایشی: 'test_'
   // آدرس Web App هاب دریافت (همان آدرسی که آخرش /exec است)
   rcvApi: 'https://script.google.com/macros/s/AKfycbxdMosPwOu9slrw2EbVSygmmyStp11Vb1PTFUtqEEo44wb0TnetvKvsFJNzWsFTBVhQug/exec',

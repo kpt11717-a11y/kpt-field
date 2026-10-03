@@ -1038,6 +1038,8 @@ setInterval(function () { flush(); }, 15000);
 setInterval(function () { if (!CUR && document.visibilityState !== 'hidden') refresh(); }, 60000);
 window.addEventListener('online', function () { flush(); refresh(); });
 window.addEventListener('pageshow', function (e) { if (e.persisted) { ST = loadState_(); CUR ? openMission(CUR) : showList(); flush(); } });
+// برگشت به برنامه (از پس‌زمینه یا قفل گوشی): همان لحظه ارسال صف و بروزرسانی، بدون صبر برای دور بعدی
+document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') { flush(); if (!CUR) refresh(); } });
 
 /* ------------------------------ ارتباط با سرور ------------------------------ */
 
