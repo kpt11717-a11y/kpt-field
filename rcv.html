@@ -100,6 +100,7 @@
   .sync-bar{position:fixed;bottom:0;left:0;right:0;background:#4f7ca8;color:#fff;padding:6px 14px;font-size:12px;display:flex;gap:10px;align-items:center;justify-content:space-between;z-index:20}
   .sync-bar button{background:rgba(255,255,255,.18);padding:3px 10px;font-size:11.5px}
   .toast{position:fixed;bottom:44px;left:12px;right:12px;max-width:600px;margin:0 auto;padding:10px 14px;border-radius:8px;font-weight:bold;z-index:30;color:#fff}
+  button.warnBtn,button.warnBtn:disabled{background:#c7811d !important;color:#fff !important;opacity:1}
   .toast.ok{background:#3f8f6b} .toast.bad{background:#c0564b} .toast.warn{background:#c7811d}
   .fin-modal{position:fixed;inset:0;background:rgba(20,25,35,.72);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
   .fin-card{background:#fff;border-radius:16px;padding:24px 20px;width:100%;max-width:440px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.35)}
@@ -341,7 +342,9 @@ function MAN() { return P().header.source === 'MANUAL'; }
 function boxLbl(r) { return (r.cs || r.bx) ? 'کیس ' + r.cs + ' / کارتن ' + r.bx : ''; }
 function boxCell(r) { return (r.cs || r.bx) ? esc(r.cs) + ' / ' + esc(r.bx) : '—'; }
 function refOf(h, lot) { return h.ref || ('lot ' + (lot == null ? h.lotNo : lot)); }
-function closed() { var s = MS().status; return s === 'CLOSED' || s === 'SHORTAGE_PENDING' || s === 'TRANSFERRED' || s === 'GONE'; }
+function closed() { var s = MS(); return s.status === 'CLOSED' || s.status === 'SHORTAGE_PENDING' || s.status === 'TRANSFERRED' || s.status === 'GONE' || !!s.closeQ; }
+// ثبت نهایی بدون اینترنت در صف گذاشته شده (بعد از همه‌ی ثبت‌های قبلی ارسال می‌شود) و هنوز به سرور نرسیده
+function closeQueued() { return !!MS().closeQ; }
 
 /* ---------------- صف ارسال ---------------- */
 function enqueue(item) {
@@ -369,7 +372,7 @@ function pump() {
       if (res.transferred || res.gone) {                              // ماموریت به فرد دیگری سپرده شده یا روی سرور حذف شده است
         var tm = first.missionID, ts = DB.st[tm];
         DB.queue = DB.queue.filter(function (q) { return q.missionID !== tm; });
-        if (ts) { ts.status = res.gone ? 'GONE' : 'TRANSFERRED'; ts.transferredTo = res.collectorName || ''; }
+        if (ts) { ts.status = res.gone ? 'GONE' : 'TRANSFERRED'; ts.transferredTo = res.collectorName || ''; delete ts.closeQ; delete ts.closeStatus; }
         save(); syncUi();
         toast(res.gone ? 'ماموریت ' + tm + ' روی سرور وجود ندارد (حذف یا برگشت داده شده)؛ ثبت‌های آن از صف این گوشی پاک شد.' :
           'ماموریت ' + tm + ' به ' + (res.collectorName || 'فرد دیگری') + ' منتقل شده است؛ از این گوشی دیگر قابل ثبت نیست.', 'warn');
@@ -379,6 +382,12 @@ function pump() {
       }
       var ack = {}; (res.acked || []).forEach(function (id) { ack[id] = 1; });
       DB.queue = DB.queue.filter(function (q) { return !ack[q.item.id]; });
+      var cs = DB.st[first.missionID];
+      if (cs && cs.closeQ && ack[cs.closeQ]) {                        // ثبت نهایی که در صف بود به سرور رسید
+        cs.status = cs.closeStatus || 'CLOSED'; delete cs.closeQ; delete cs.closeStatus;
+        toast('✅ ثبت نهایی ماموریت ' + first.missionID + ' به سرور رسید.', 'ok');
+        if (DB.active === first.missionID && !$('formSection').classList.contains('hidden')) setTimeout(renderAll, 0);
+      }
       if (res.serverNow) DB.offset = res.serverNow - Math.round((sentAt + Date.now()) / 2);
       DB.lastSync = Date.now();
       save(); syncUi(); refreshMarks();
@@ -458,7 +467,7 @@ function renderQueue() {
     var p = DB.pkgs[id], s = DB.st[id], pend = DB.queue.filter(function (q) { return q.missionID === id; }).length;
     var done = s.times.KPT_ARRIVAL && !pend;
     return '<div class="queue-item" data-m="' + esc(id) + '"><b>ماموریت ' + esc(id) + '</b> — شماره ' + esc(p.header.docNo) + ' — ' + esc(p.header.warehouseName) +
-      ' — ' + esc(refOf(p.header)) + ' — ' + p.rows.length + (p.header.source === 'MANUAL' ? ' قلم — ' : ' کارتن — ') + (ST_LBL[s.status] || s.status) +
+      ' — ' + esc(refOf(p.header)) + ' — ' + p.rows.length + (p.header.source === 'MANUAL' ? ' قلم — ' : ' کارتن — ') + (s.closeQ ? '<span class="q wait">⏳ ثبت نهایی در صف (هنوز به سرور نرسیده)</span>' : (ST_LBL[s.status] || s.status)) +
       (pend ? ' — <span class="q wait">⏳ ' + pend + ' مورد در صف</span>' : '') +
       ((done || s.status === 'TRANSFERRED' || s.status === 'GONE') ? ' <button type="button" data-rmpkg="' + esc(id) + '" style="background:#6b7785;padding:1px 8px;font-size:11px">حذف از گوشی</button>' : '') + '</div>';
   }).join('') : '';
@@ -893,7 +902,9 @@ function renderExit() {
   $('exitOkText').textContent = 'سند خروج دقیقاً با جدول جمع‌آوری بالا' + (n && revealed() ? '، همراه با ' + n + ' ردیف کسری،' : '') + ' صادر شده است.';
   $('exitNo').disabled = dis; $('exitOk').disabled = dis;
   $('closeBtn').disabled = closed() || !revealed();
-  $('closeBtn').textContent = closed() ? (s.status === 'CLOSED' ? '✓ ثبت نهایی شد' : '✓ ثبت نهایی شد — کسری در انتظار تأیید سرپرست') : 'ثبت نهایی (بستن ماموریت) — با ثبت زمان «دریافت سند خروج»';
+  $('closeBtn').textContent = closeQueued() ? '⏳ ثبت نهایی در صف — به‌محض وصل شدن اینترنت خودکار ارسال می‌شود' :
+    closed() ? (s.status === 'CLOSED' ? '✓ ثبت نهایی شد' : '✓ ثبت نهایی شد — کسری در انتظار تأیید سرپرست') : 'ثبت نهایی (بستن ماموریت) — با ثبت زمان «دریافت سند خروج»';
+  $('closeBtn').classList.toggle('warnBtn', closeQueued());
 }
 $('exitNo').addEventListener('change', function () { MS().exitNo = this.value.trim(); save(); renderTimes(); });
 $('exitOk').addEventListener('change', function () { MS().exitOk = this.checked; save(); renderTimes(); });
@@ -918,20 +929,45 @@ function finModal(kind, title, text, err) {
   var ico = { busy: '⏳', ok: '✅', fail: '⛔' }[kind];
   m.innerHTML = '<div class="fin-card ' + kind + '"><div class="fi">' + ico + '</div><div class="ft">' + esc(title) + '</div><div class="fs">' + text + '</div>' +
     (err ? '<div class="ferr">' + esc(err) + '</div>' : '') +
-    (kind === 'fail' ? '<button type="button" id="finRetry">🔁 دوباره تلاش کن</button><button type="button" class="sec" id="finClose">بستن (ماموریت باز می‌ماند)</button>' : '') +
+    (kind === 'fail' ? '<button type="button" id="finRetry">🔁 دوباره تلاش کن</button>' +
+      (finCanQueue ? '<button type="button" id="finQueue" style="background:#c7811d">📥 ثبت در صف و ادامه (خروج از سایت)</button>' : '') +
+      '<button type="button" class="sec" id="finClose">بستن (ماموریت باز می‌ماند)</button>' : '') +
     (kind === 'ok' ? '<button type="button" id="finClose">باشه</button>' : '') + '</div>';
   if ($('finRetry')) $('finRetry').onclick = function () { doClose(); };
+  if ($('finQueue')) $('finQueue').onclick = function () { queueClose(); };
   if ($('finClose')) $('finClose').onclick = function () { finModal(null); };
   if (kind === 'fail') { try { navigator.vibrate && navigator.vibrate([300, 150, 300, 150, 300]); } catch (e) {} }
 }
-var closing = false;
+var closing = false, finCanQueue = false;
+// ساخت بسته‌ی «بستن ماموریت» از روی اطلاعات گوشی
+function closeItem_(s, mid) {
+  var recount = {}, overNotes = {};
+  shortRows().forEach(function (r) { var x = s.recount[r.no] || {}; recount[r.no] = { c2: x.c2, c3: x.c3 == null ? null : x.c3, sp: x.sp || 0, reason: finalOf(r) < r.total ? x.reason : '' }; });
+  rows().forEach(function (r) { var x = s.rows[r.no]; if (x && x.overNote) overNotes[r.no] = x.overNote; });
+  DB.seq++;
+  return { type: 'CLOSE', id: ME.userID + '-' + mid + '-' + DB.seq + '-' + Date.now(), at: nowSrv(), exitDocNo: s.exitNo, recount: recount, overNotes: overNotes,
+           customerRep: s.custRep || '', mismatchNote: s.info.description || '' };
+}
+// اینترنت نیست: ثبت نهایی پشت همه‌ی ثبت‌های قبلی در صف می‌رود (ترتیب حفظ می‌شود) تا کاربر بتواند خروج از سایت را ثبت کند
+function queueClose() {
+  var s = MS(), mid = DB.active;
+  if (closed()) { finModal(null); return; }
+  var it = closeItem_(s, mid);
+  it.at = (s.times.EXIT_DOC && s.times.EXIT_DOC.at) || it.at;     // زمان واقعی بستن = زمان دریافت سند خروج
+  s.closeQ = it.id; s.closeStatus = unresolvedRows().length ? 'SHORTAGE_PENDING' : 'CLOSED';
+  DB.queue.push({ missionID: mid, missionKey: P().missionKey, item: it });
+  save(); syncUi(); kick(); renderAll();
+  finModal('ok', 'ثبت نهایی در صف گذاشته شد', 'جدول و کسری‌ها قفل شد و می‌توانید «خروج از سایت» و بقیه‌ی زمان‌ها را ثبت کنید.<br><b>ثبت نهایی هنوز به سرور نرسیده است</b>؛ به‌محض وصل شدن اینترنت خودکار ارسال می‌شود. برنامه را حذف نکنید و داده‌های مرورگر را پاک نکنید.');
+}
 function doClose() {
   var s = MS(), mid = DB.active;
   if (closed() || closing) return;
   closing = true;
   var fail = function (msg, err) {
     closing = false;
-    finModal('fail', 'ثبت نهایی انجام نشد!', msg + '<br><b>ماموریت هنوز باز است و ثبت نهایی نشده.</b> اطلاعات روی گوشی محفوظ است؛ وقتی اینترنت وصل شد «دوباره تلاش کن» را بزنید.', err);
+    finCanQueue = !err || isNetErr(err);                               // فقط برای مشکل اینترنت (نه خطای سرور)
+    finModal('fail', 'ثبت نهایی انجام نشد!', msg + '<br><b>ماموریت هنوز باز است و ثبت نهایی نشده.</b> اطلاعات روی گوشی محفوظ است. وقتی اینترنت وصل شد «دوباره تلاش کن» را بزنید' +
+      (finCanQueue ? '؛ یا اگر باید از سایت خارج شوید «ثبت در صف و ادامه» را بزنید.' : '.'), err);
   };
   finModal('busy', 'در حال ارسال اطلاعات…', 'اول همه‌ی ثبت‌های این ماموریت به سرور فرستاده می‌شود، بعد ماموریت بسته می‌شود. لطفاً صفحه را نبندید.');
   // ۱) خالی شدن صف این ماموریت
@@ -947,12 +983,7 @@ function doClose() {
   })();
   // ۲) ارسال مستقیم بستن ماموریت و صبر برای تأیید سرور
   function sendClose() {
-    var recount = {}, overNotes = {};
-    shortRows().forEach(function (r) { var x = s.recount[r.no] || {}; recount[r.no] = { c2: x.c2, c3: x.c3 == null ? null : x.c3, sp: x.sp || 0, reason: finalOf(r) < r.total ? x.reason : '' }; });
-    rows().forEach(function (r) { var x = s.rows[r.no]; if (x && x.overNote) overNotes[r.no] = x.overNote; });
-    DB.seq++;
-    var item = { type: 'CLOSE', id: ME.userID + '-' + mid + '-' + DB.seq + '-' + Date.now(), at: nowSrv(), exitDocNo: s.exitNo, recount: recount, overNotes: overNotes,
-                 customerRep: s.custRep || '', mismatchNote: s.info.description || '' };
+    var item = closeItem_(s, mid);
     save();
     var done = false, timer = setTimeout(function () { if (done) return; done = true; fail('سرور جواب نداد (اینترنت ضعیف).', ''); }, 45000);
     google.script.run
