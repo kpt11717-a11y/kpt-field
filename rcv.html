@@ -227,19 +227,20 @@
       <p class="note">تعداد لیست درخواست فقط از این مرحله به بعد نمایش داده می‌شود.</p>
       <div id="cmpSummary"></div>
       <div class="tbl"><table class="grid" style="min-width:760px">
-        <thead><tr><th>ردیف لیست</th><th>شماره فنی</th><th>کیس / کارتن</th><th>شرح فارسی</th><th>تعداد لیست</th><th>جمع‌آوری‌شده</th><th>باقی مانده</th><th>وضعیت</th><th>توضیح اضافه</th></tr></thead>
+        <thead><tr><th>ردیف لیست</th><th>شماره فنی</th><th>کیس / کارتن</th><th>شرح فارسی</th><th>تعداد لیست</th><th>جمع‌آوری‌شده</th><th>باقی مانده</th><th>وضعیت</th><th>علت اضافه</th></tr></thead>
         <tbody id="cmpBody"></tbody>
       </table></div>
     </div>
 
     <div id="shortSection" class="hidden">
-      <h3>کنترل کسری (شمارش دوم با حضور نماینده انبار مشتری)</h3>
+      <h3>کنترل کسری و اضافه (شمارش دوم با حضور نماینده انبار مشتری)</h3>
       <p class="note">ردیف‌هایی که «باقی مانده» دارند با حضور نماینده‌ی انبار مشتری دوباره شمرده می‌شوند (اگر شمارش دوم با اول برابر نبود، شمارش سوم لازم است).
         در شمارش دوم/سوم فقط <b>همان اجناس کارتن</b> را بشمارید. اگر انباردار مشتری بعد از اعلام کسری چیزی تحویل داد (مثلاً از ذخیره‌ی خودش)، تعدادش را در ستون «تحویل تکمیلی» بنویسید.
-        <b>مقدار نهایی = آخرین شمارش + تحویل تکمیلی.</b> اگر مقدار نهایی به تعداد لیست برسد، کسری برطرف می‌شود و علت لازم نیست.</p>
+        <b>مقدار نهایی = آخرین شمارش + تحویل تکمیلی.</b> اگر مقدار نهایی به تعداد لیست برسد، کسری برطرف می‌شود و علت لازم نیست.<br>
+        ردیف‌هایی که <b>اضافه</b> دارند هم همین‌طور دوباره شمرده می‌شوند؛ اگر بعد از شمارش دوم/سوم هنوز اضافه بود، علت و <b>تکلیف جنس اضافه</b> (برگرداندن در محل یا آوردن به KPT) لازم است و برای تأیید سرپرست می‌رود.</p>
       <div class="form-row"><div class="form-group" style="max-width:360px"><label>نام نماینده‌ی انبار مشتری (حاضر در شمارش دوم)</label><input type="text" id="custRep"></div></div>
       <div class="tbl"><table class="grid" style="min-width:900px">
-        <thead><tr><th>ردیف</th><th>شماره فنی</th><th>کیس / کارتن</th><th>تعداد کل</th><th>شمارش اول</th><th>باقی مانده</th><th>شمارش دوم</th><th>شمارش سوم</th><th>تحویل تکمیلی (+)</th><th>مقدار نهایی / کسری</th><th>علت کسری</th></tr></thead>
+        <thead><tr><th>ردیف</th><th>شماره فنی</th><th>کیس / کارتن</th><th>تعداد کل</th><th>شمارش اول</th><th>باقی مانده</th><th>شمارش دوم</th><th>شمارش سوم</th><th>تحویل تکمیلی (+)</th><th>مقدار نهایی / کسری / اضافه</th><th>علت (و تکلیف اضافه)</th></tr></thead>
         <tbody id="shortBody"></tbody>
       </table></div>
       <div id="rcMsg"></div>
@@ -267,7 +268,7 @@
 
     <div id="finalMsg"></div>
     <div class="button-section"><button type="button" id="closeBtn">ثبت نهایی (بستن ماموریت)</button></div>
-    <p class="note">پس از ثبت نهایی، جدول جمع‌آوری قفل می‌شود. کسری‌ها برای تأیید سرپرست در بله ارسال می‌شود.</p>
+    <p class="note">پس از ثبت نهایی، جدول جمع‌آوری قفل می‌شود. کسری‌ها و اضافه‌ها برای تأیید سرپرست در بله ارسال می‌شود.</p>
   </div>
 </div>
 
@@ -284,6 +285,16 @@
 var SESSION_TOKEN = window.__FIELD_TOKEN || 'offline';
 var FEATURE_QR = true;
 var REASONS = ['کیس/کارتن ناقص از مبدأ', 'قطعه آسیب‌دیده', 'کیس/کارتن پیدا نشد', 'سایر (در توضیحات)'];
+// اضافه: علت + تکلیف جنس (مثل کسری: شمارش دوم/سوم با حضور نماینده‌ی انبار مشتری و تأیید سرپرست)
+var OVER_REASONS = ['ارسال اضافه از انبار مشتری', 'قطعه‌ی شماره فنی دیگر داخل کارتن', 'مقدار داخل کارتن بیشتر از برچسب', 'سایر (توضیح اجباری)'];
+// فهرست علت‌ها از جدول ShortageReasons (همراه بسته‌ی ماموریت دانلود می‌شود و آفلاین هم هست)؛
+// ماموریتی که قبل از این تغییر دانلود شده: همان فهرست ثابت بالا. «سایر» همیشه آخر فهرست است.
+function reasonsOf_(kind) {
+  var r = ((DB.pkgs[DB.active] || {}).reasons || {})[kind];
+  var base = r && r.length ? r : (kind === 'over' ? OVER_REASONS : REASONS).filter(function (t) { return !/^سایر/.test(t); });
+  return base.concat([kind === 'over' ? 'سایر (توضیح اجباری)' : 'سایر (در توضیحات)']);
+}
+var OVER_ACTS = [['RETURNED', 'در محل به انبار مشتری برگردانده شد'], ['TO_KPT', 'به KPT آورده شد']];
 var TIMES = [
   { key: 'START',           label: 'شروع ماموریت',            box: 'times1', place: 'home' },
   { key: 'CUST_ARRIVAL',    label: 'رسیدن به انبار مشتری',    box: 'times1', place: 'site' },
@@ -368,13 +379,11 @@ function pump() {
     .withSuccessHandler(function (res) {
       inflight = false; lastErr = ''; nextTry = 0;
       if (res.transferred || res.gone) {                              // ماموریت به فرد دیگری سپرده شده یا روی سرور حذف شده است
-        var tm = first.missionID, ts = DB.st[tm];
+        var tm = first.missionID, c = {};
+        c[tm] = res.gone ? { state: 'GONE' } : { state: 'TRANSFERRED', collectorName: res.collectorName || '' };
+        applyServerCheck_(c);                                         // ماموریت کامل از گوشی پاک و به کاربر گفته می‌شود
         DB.queue = DB.queue.filter(function (q) { return q.missionID !== tm; });
-        if (ts) { ts.status = res.gone ? 'GONE' : 'TRANSFERRED'; ts.transferredTo = res.collectorName || ''; }
-        save(); syncUi();
-        toast(res.gone ? 'ماموریت ' + tm + ' روی سرور وجود ندارد (حذف یا برگشت داده شده)؛ ثبت‌های آن از صف این گوشی پاک شد.' :
-          'ماموریت ' + tm + ' به ' + (res.collectorName || 'فرد دیگری') + ' منتقل شده است؛ از این گوشی دیگر قابل ثبت نیست.', 'warn');
-        if (DB.active === tm && !$('formSection').classList.contains('hidden')) renderAll(); else renderQueue();
+        save(); syncUi(); renderQueue();
         if (DB.queue.length) kick();
         return;
       }
@@ -452,7 +461,7 @@ function startApp(u, online) {
 }
 
 /* ---------------- ۱) ماموریت‌های من ---------------- */
-var ST_LBL = { ASSIGNED: 'تخصیص‌یافته', STARTED: 'در حال انجام', CLOSED: 'بسته شد', SHORTAGE_PENDING: 'بسته شد — کسری در انتظار تأیید', TRANSFERRED: '🔁 به فرد دیگری منتقل شد', GONE: '🗑 روی سرور حذف شده' };
+var ST_LBL = { ASSIGNED: 'تخصیص‌یافته', STARTED: 'در حال انجام', CLOSED: 'بسته شد', SHORTAGE_PENDING: 'بسته شد — کسری/اضافه در انتظار تأیید', TRANSFERRED: '🔁 به فرد دیگری منتقل شد', GONE: '🗑 روی سرور حذف شده' };
 function renderQueue() {
   var ids = Object.keys(DB.pkgs);
   $('queueList').innerHTML = ids.length ? '<p class="note"><b>روی این گوشی (بدون اینترنت هم باز می‌شود):</b></p>' + ids.map(function (id) {
@@ -465,7 +474,7 @@ function renderQueue() {
       ((done || s.status === 'TRANSFERRED' || s.status === 'GONE') ? ' <button type="button" data-rmpkg="' + esc(id) + '" style="background:#6b7785;padding:1px 8px;font-size:11px">حذف از گوشی</button>' : '') + '</div>';
   }).join('') : '';
   document.querySelectorAll('[data-m]').forEach(function (el) {
-    el.addEventListener('click', function (e) { if (e.target.getAttribute('data-rmpkg')) return; DB.active = el.getAttribute('data-m'); save(); openForm(); });
+    el.addEventListener('click', function (e) { if (e.target.getAttribute('data-rmpkg')) return; openChecked_(el.getAttribute('data-m')); });
   });
   document.querySelectorAll('[data-rmpkg]').forEach(function (b) {
     b.addEventListener('click', function () {
@@ -475,11 +484,43 @@ function renderQueue() {
     });
   });
 }
+// ماموریتی که روی سرور حذف شده یا به فرد دیگری منتقل شده، کامل از گوشی پاک می‌شود (دیگر در فهرست دیده نمی‌شود)
+function removeLocalMission_(id) {
+  delete DB.pkgs[id]; delete DB.st[id];
+  DB.queue = DB.queue.filter(function (q) { return q.missionID !== id; });
+  if (DB.active === id) { DB.active = null; $('formSection').classList.add('hidden'); $('queueSection').classList.remove('hidden'); }
+}
+function applyServerCheck_(check) {
+  var gone = [];
+  Object.keys(check || {}).forEach(function (id) {
+    if (!DB.pkgs[id]) return;
+    var c = check[id];
+    gone.push('• ' + id + (c.state === 'TRANSFERRED' ? ' — به ' + (c.collectorName || 'فرد دیگری') + ' منتقل شد' : ' — روی سرور حذف شده'));
+    removeLocalMission_(id);
+  });
+  if (gone.length) {
+    save(); renderQueue(); syncUi();
+    alert('این ماموریت‌ها دیگر برای شما نیستند و از روی گوشی پاک شدند:\n' + gone.join('\n') + '\n\nبرای ادامه با سرپرست هماهنگ کنید.');
+  }
+  return gone.length;
+}
+function localList_() { return Object.keys(DB.pkgs).map(function (id) { return { id: id, key: DB.pkgs[id].missionKey || '' }; }); }
+// باز کردن ماموریت از فهرست: اگر اینترنت هست، اول از سرور می‌پرسد که ماموریت هنوز مال همین نفر است
+function openChecked_(id) {
+  var opened = false, go = function () { if (opened || !DB.pkgs[id]) return; opened = true; DB.active = id; save(); openForm(); };
+  if (!navigator.onLine) { go(); return; }
+  var t = setTimeout(go, 6000);                                       // اینترنت ضعیف: بیش از ۶ ثانیه منتظر نمی‌ماند
+  google.script.run
+    .withSuccessHandler(function (res) { clearTimeout(t); if (res && res.serverNow) DB.offset = res.serverNow - Date.now(); if (!applyServerCheck_(res && res.check)) go(); })
+    .withFailureHandler(function () { clearTimeout(t); go(); })
+    .rcvMyMissions(SESSION_TOKEN, [{ id: id, key: (DB.pkgs[id] || {}).missionKey || '' }]);
+}
 function loadServerList() {
   $('serverList').innerHTML = '<p class="note">در حال دریافت ماموریت‌های جدید از سرور…</p>';
   google.script.run
     .withSuccessHandler(function (res) {
       if (res.serverNow) DB.offset = res.serverNow - Date.now();
+      applyServerCheck_(res.check);
       var list = (res.missions || []).filter(function (m) { return !DB.pkgs[m.missionID]; });
       $('serverList').innerHTML = list.length ? '<p class="note"><b>ماموریت‌های جدید (برای ذخیره روی گوشی، لمس کنید):</b></p>' + list.map(function (m) {
         return '<div class="queue-item" data-dl="' + esc(m.missionID) + '"><b>ماموریت ' + esc(m.missionID) + '</b> — شماره ' + esc(m.docNo) + ' — ' + esc(m.warehouseName) +
@@ -488,7 +529,7 @@ function loadServerList() {
       document.querySelectorAll('[data-dl]').forEach(function (el) { el.addEventListener('click', function () { download(el.getAttribute('data-dl'), el); }); });
     })
     .withFailureHandler(function (e) { $('serverList').innerHTML = '<p class="msg warn">فهرست جدید از سرور دریافت نشد (' + esc(errText(e)) + '). ماموریت‌های روی گوشی قابل استفاده‌اند.</p>'; })
-    .rcvMyMissions(SESSION_TOKEN);
+    .rcvMyMissions(SESSION_TOKEN, localList_());
 }
 function download(id, el) {
   el.textContent = 'در حال دریافت و ذخیره‌ی لیست روی گوشی…';
@@ -803,7 +844,7 @@ function renderCompare() {
   var rev = revealed(); $('cmpSection').classList.toggle('hidden', !rev); if (!rev) return;
   var s = MS(), n = { ok: 0, short: 0, over: 0, none: 0 }, dis = closed() ? ' disabled' : '';
   $('cmpBody').innerHTML = rows().map(function (r) {
-    var c1 = counted(r.no), rc = s.rcDone && c1 != null && c1 < r.total && (s.recount[r.no] || {}).c2 != null;
+    var c1 = counted(r.no), rc = s.rcDone && c1 != null && c1 !== r.total && (s.recount[r.no] || {}).c2 != null;
     var c = rc ? finalOf(r) : c1, got = c == null ? 0 : c, rem = r3(r.total - got), st, cls = '';
     if (c == null) { st = 'جمع نشده'; n.none++; cls = 'pos'; }
     else if (rem === 0) { st = '✔ کامل'; n.ok++; }
@@ -812,21 +853,35 @@ function renderCompare() {
     var x = s.rows[r.no] || {};
     return '<tr><td>' + r.no + '</td><td class="code">' + esc(r.pn) + '</td><td class="code">' + boxCell(r) + '</td><td class="desc">' + esc(r.desc) + '</td>' +
       '<td>' + r.total + '</td><td>' + (c == null ? '—' : '<b>' + c + '</b>' + (rc ? '<div class="note">شمارش اول: ' + c1 + '</div>' : '')) + '</td><td class="rem ' + cls + '">' + rem + '</td><td>' + st + '</td>' +
-      '<td>' + (rem < 0 ? '<input type="text" class="nt' + (x.overNote ? '' : ' err') + '" data-onote="' + r.no + '" value="' + esc(x.overNote || '') + '" placeholder="توضیح اجباری"' + dis + '>' : '') + '</td></tr>';
+      '<td class="desc">' + (rem < 0 ? esc(overText(r.no)) : '') + '</td></tr>';
   }).join('');
   $('cmpSummary').innerHTML = '<div class="msg ' + (n.short + n.none + n.over ? 'warn' : 'ok') + '">کامل: ' + n.ok + ' — کسری: ' + n.short + ' — جمع نشده: ' + n.none + ' — اضافه: ' + n.over + '</div>';
-  document.querySelectorAll('[data-onote]').forEach(function (el) {
-    el.addEventListener('change', function () { MS().rows[el.getAttribute('data-onote')].overNote = el.value.trim(); save(); renderAll(); });
-  });
 }
-function shortRows() { return rows().filter(function (r) { var c = counted(r.no); return c == null || c < r.total; }); }
+// متن علت/تکلیف اضافه‌ی یک ردیف (برای جدول مقایسه)
+function overText(no) {
+  var x = MS().recount[no] || {}, a = OVER_ACTS.filter(function (o) { return o[0] === x.oa; })[0];
+  return x.or ? x.or + (x.on ? ' — ' + x.on : '') + (a ? ' — ' + a[1] : '') : 'در «کنترل کسری و اضافه» پایین ثبت شود';
+}
+// ردیف‌هایی که کنترل لازم دارند: کسری (یا جمع نشده) و اضافه
+function shortRows() { return rows().filter(function (r) { var c = counted(r.no); return c == null || c !== r.total; }); }
 // مقدار نهایی یک ردیف کسری = آخرین شمارش ثبت‌شده (سوم، وگرنه دوم، وگرنه اول) + تحویل تکمیلی
 // شمارش دوم/سوم فقط اجناس خود کارتن است؛ تحویل تکمیلی (مثلاً از ذخیره‌ی انباردار مشتری) جدا ثبت و جمع می‌شود
 function finalOf(r) {
   var c1 = counted(r.no) || 0, x = MS().recount[r.no] || {};
   return r3((x.c3 != null ? x.c3 : (x.c2 != null ? x.c2 : c1)) + (x.sp > 0 ? x.sp : 0));
 }
-function unresolvedRows() { return shortRows().filter(function (r) { return finalOf(r) < r.total; }); }
+function unresolvedRows() { return shortRows().filter(function (r) { return finalOf(r) !== r.total; }); }
+// علت/تکلیف لازم برای یک ردیف (بعد از شمارش دوم/سوم)
+function rowNeeds(r) {
+  var x = MS().recount[r.no] || {}, f = finalOf(r), e = [];
+  if (f < r.total && !x.reason) e.push('علت کسری ردیف ' + r.no);
+  if (f > r.total) {
+    if (!x.or) e.push('علت اضافه ردیف ' + r.no);
+    if (!x.oa) e.push('تکلیف جنس اضافه ردیف ' + r.no);
+    if (x.or && /^سایر/.test(x.or) && !x.on) e.push('توضیح اضافه ردیف ' + r.no);
+  }
+  return e;
+}
 function renderShort() {
   var show = revealed() && shortRows().length > 0;
   $('shortSection').classList.toggle('hidden', !show); if (!show) return;
@@ -836,23 +891,32 @@ function renderShort() {
   $('rcBtn').textContent = s.rcDone ? '✏️ ویرایش شمارش دوم' : 'ثبت شمارش دوم و مقدار نهایی';
   $('rcBtn').className = s.rcDone ? 'sec' : '';
   $('rcMsg').innerHTML = s.rcDone ? '<div class="msg ok">✔ شمارش دوم ثبت شد' + (s.rcAt ? ' (' + esc(s.rcAt) + ')' : '') + '. مقدار نهایی جایگزین شمارش اول شد و در «مقایسه» بالا دیده می‌شود.' +
-    (unresolvedRows().length ? ' — ' + unresolvedRows().length + ' ردیف هنوز کسری دارد و برای تأیید سرپرست می‌رود.' : ' — همه‌ی کسری‌ها برطرف شد.') + '</div>' : '';
+    (unresolvedRows().length ? ' — ' + unresolvedRows().length + ' ردیف هنوز کسری یا اضافه دارد و برای تأیید سرپرست می‌رود.' : ' — همه‌ی مغایرت‌ها برطرف شد.') + '</div>' : '';
   $('custRep').onchange = function () { s.custRep = this.value.trim(); save(); renderAll(); };
   $('shortBody').innerHTML = shortRows().map(function (r) {
     var c1 = counted(r.no) || 0, x = s.recount[r.no] || {}, need3 = x.c2 != null && x.c2 !== c1;
     return '<tr><td>' + r.no + '</td><td class="code">' + esc(r.pn) + '</td><td class="code">' + boxCell(r) + '</td>' +
-      '<td>' + r.total + '</td><td>' + c1 + '</td><td class="rem pos">' + r3(r.total - c1) + '</td>' +
+      '<td>' + r.total + '</td><td>' + c1 + '</td><td class="rem ' + (c1 > r.total ? 'neg' : 'pos') + '">' + r3(r.total - c1) + '</td>' +
       '<td><input type="number" step="any" inputmode="' + (MAN() ? 'decimal' : 'numeric') + '" data-c2="' + r.no + '" value="' + (x.c2 == null ? '' : x.c2) + '"' + dis + '></td>' +
       '<td>' + (need3 ? '<input type="number" step="any" inputmode="' + (MAN() ? 'decimal' : 'numeric') + '" data-c3="' + r.no + '" value="' + (x.c3 == null ? '' : x.c3) + '"' + dis + '>' : '—') + '</td>' +
-      '<td><input type="number" step="any" min="0" inputmode="' + (MAN() ? 'decimal' : 'numeric') + '" data-sp="' + r.no + '" value="' + (x.sp ? x.sp : '') + '" placeholder="0"' + dis + '></td>' +
+      '<td>' + ((x.c3 != null ? x.c3 : (x.c2 != null ? x.c2 : c1)) >= r.total && !(x.sp > 0) ? '—' : '<input type="number" step="any" min="0" inputmode="' + (MAN() ? 'decimal' : 'numeric') + '" data-sp="' + r.no + '" value="' + (x.sp ? x.sp : '') + '" placeholder="0"' + dis + '>') + '</td>' +
       (function () { var f = finalOf(r), rem = r3(r.total - f); return '<td>' + f + ' — ' + (rem > 0 ? '<span class="rem pos">کسری ' + rem + '</span>' : rem < 0 ? '<span class="rem neg">اضافه ' + (-rem) + '</span>' : '<span style="color:#3f8f6b;font-weight:bold">✔ برطرف شد</span>') + '</td>'; })() +
-      '<td>' + (finalOf(r) >= r.total ? '—' : '<select data-rs="' + r.no + '" style="min-width:150px"' + dis + '><option value="">انتخاب کنید</option>' +
-      REASONS.map(function (t) { return '<option' + (x.reason === t ? ' selected' : '') + '>' + t + '</option>'; }).join('') + '</select>') + '</td></tr>';
+      '<td>' + (finalOf(r) === r.total ? '—' : finalOf(r) < r.total
+        ? '<select data-rs="' + r.no + '" style="min-width:150px"' + dis + '><option value="">علت کسری…</option>' +
+          reasonsOf_('short').map(function (t) { return '<option' + (x.reason === t ? ' selected' : '') + '>' + esc(t) + '</option>'; }).join('') + '</select>'
+        : '<select data-or="' + r.no + '" style="min-width:170px"' + dis + '><option value="">علت اضافه…</option>' +
+          reasonsOf_('over').map(function (t) { return '<option' + (x.or === t ? ' selected' : '') + '>' + esc(t) + '</option>'; }).join('') + '</select>' +
+          '<select data-oa="' + r.no + '" style="min-width:170px;margin-top:3px"' + dis + '><option value="">تکلیف جنس اضافه…</option>' +
+          OVER_ACTS.map(function (a) { return '<option value="' + a[0] + '"' + (x.oa === a[0] ? ' selected' : '') + '>' + a[1] + '</option>'; }).join('') + '</select>' +
+          '<input type="text" data-on="' + r.no + '" value="' + esc(x.on || '') + '" placeholder="توضیح' + (/^سایر/.test(x.or || '') ? ' (اجباری)' : '') + '" style="margin-top:3px"' + dis + '>') + '</td></tr>';
   }).join('');
   function rc(no) { return s.recount[no] || (s.recount[no] = {}); }
   document.querySelectorAll('[data-c2]').forEach(function (el) { el.addEventListener('change', function () { var o = rc(el.getAttribute('data-c2')); o.c2 = num(el.value); delete o.c3; save(); renderAll(); }); });
   document.querySelectorAll('[data-c3]').forEach(function (el) { el.addEventListener('change', function () { rc(el.getAttribute('data-c3')).c3 = num(el.value); save(); renderAll(); }); });
   document.querySelectorAll('[data-rs]').forEach(function (el) { el.addEventListener('change', function () { rc(el.getAttribute('data-rs')).reason = el.value; save(); renderAll(); }); });
+  document.querySelectorAll('[data-or]').forEach(function (el) { el.addEventListener('change', function () { rc(el.getAttribute('data-or')).or = el.value; save(); renderAll(); }); });
+  document.querySelectorAll('[data-oa]').forEach(function (el) { el.addEventListener('change', function () { rc(el.getAttribute('data-oa')).oa = el.value; save(); renderAll(); }); });
+  document.querySelectorAll('[data-on]').forEach(function (el) { el.addEventListener('change', function () { rc(el.getAttribute('data-on')).on = el.value.trim(); save(); renderAll(); }); });
   document.querySelectorAll('[data-sp]').forEach(function (el) { el.addEventListener('change', function () { var v = num(el.value); rc(el.getAttribute('data-sp')).sp = v > 0 ? v : 0; save(); renderAll(); }); });
 }
 // ثبت شمارش دوم: کنترل کامل، قفل ردیف‌ها و ارسال مقدار نهایی به سرور (جایگزین شمارش اول)
@@ -866,13 +930,13 @@ $('rcBtn').addEventListener('click', function () {
     var c1 = counted(r.no) || 0, x = s.recount[r.no] || {};
     if (x.c2 == null) errs.push('شمارش دوم ردیف ' + r.no + ' (' + r.pn + ')');
     else if (x.c2 !== c1 && x.c3 == null) errs.push('شمارش سوم ردیف ' + r.no + ' (شمارش دوم با اول فرق دارد)');
-    if (finalOf(r) < r.total && !x.reason) errs.push('علت کسری ردیف ' + r.no);
+    errs = errs.concat(rowNeeds(r));
   });
   if (errs.length) { $('rcMsg').innerHTML = '<div class="msg bad">کامل شود:<br>• ' + errs.map(esc).join('<br>• ') + '</div>'; return; }
   var list = shortRows().map(function (r) { return r.pn + ': ' + (counted(r.no) || 0) + ' ← ' + finalOf(r); }).join('\n');
   if (!confirm('مقدار نهایی این ردیف‌ها جایگزین شمارش اول شود؟\n' + list)) return;
   var rows = {};
-  shortRows().forEach(function (r) { var x = s.recount[r.no] || {}; rows[r.no] = { c2: x.c2, c3: x.c3 == null ? null : x.c3, sp: x.sp || 0 }; });
+  shortRows().forEach(function (r) { var x = s.recount[r.no] || {}; rows[r.no] = { c2: x.c2, c3: x.c3 == null ? null : x.c3, sp: x.sp || 0, or: x.or || '', oa: x.oa || '', on: x.on || '' }; });
   s.rcDone = true; s.rcAt = fmtTime(nowSrv());
   enqueue({ type: 'RECOUNT', rows: rows, customerRep: s.custRep });
   save(); renderAll();
@@ -881,14 +945,13 @@ $('rcBtn').addEventListener('click', function () {
 function missing() {
   var s = MS(), errs = [];
   if (!s.times.COLLECTION_END) errs.push('ثبت زمان «پایان جمع‌آوری»');
-  rows().forEach(function (r) { var c = counted(r.no), x = s.rows[r.no] || {}; if (c != null && c > r.total && !x.overNote) errs.push('توضیح اضافه برای ردیف ' + r.no); });
   if (s.times.COLLECTION_END && shortRows().length && !s.custRep) errs.push('نام نماینده‌ی انبار مشتری');
   if (s.times.COLLECTION_END && shortRows().length && !s.rcDone) errs.push('زدن دکمه‌ی «ثبت شمارش دوم و مقدار نهایی»');
   shortRows().forEach(function (r) {
     var c1 = counted(r.no) || 0, x = s.recount[r.no] || {};
     if (x.c2 == null) errs.push('شمارش دوم ردیف ' + r.no);
     else if (x.c2 !== c1 && x.c3 == null) errs.push('شمارش سوم ردیف ' + r.no);
-    if (finalOf(r) < r.total && !x.reason) errs.push('علت کسری ردیف ' + r.no);
+    errs = errs.concat(rowNeeds(r));
   });
   return errs;
 }
@@ -901,10 +964,10 @@ function exitReady() {
 }
 function renderExit() {
   var s = MS(), n = unresolvedRows().length, dis = closed() || !!s.times.EXIT_DOC;
-  $('exitOkText').textContent = 'سند خروج دقیقاً با جدول جمع‌آوری بالا' + (n && revealed() ? '، همراه با ' + n + ' ردیف کسری،' : '') + ' صادر شده است.';
+  $('exitOkText').textContent = 'سند خروج دقیقاً با جدول جمع‌آوری بالا' + (n && revealed() ? '، همراه با ' + n + ' ردیف کسری/اضافه،' : '') + ' صادر شده است.';
   $('exitNo').disabled = dis; $('exitOk').disabled = dis;
   $('closeBtn').disabled = closed() || !revealed();
-  $('closeBtn').textContent = closed() ? (s.status === 'CLOSED' ? '✓ ثبت نهایی شد' : '✓ ثبت نهایی شد — کسری در انتظار تأیید سرپرست') : 'ثبت نهایی (بستن ماموریت) — با ثبت زمان «دریافت سند خروج»';
+  $('closeBtn').textContent = closed() ? (s.status === 'CLOSED' ? '✓ ثبت نهایی شد' : '✓ ثبت نهایی شد — کسری/اضافه در انتظار تأیید سرپرست') : 'ثبت نهایی (بستن ماموریت) — با ثبت زمان «دریافت سند خروج»';
 }
 $('exitNo').addEventListener('change', function () { MS().exitNo = this.value.trim(); save(); renderTimes(); });
 $('exitOk').addEventListener('change', function () { MS().exitOk = this.checked; save(); renderTimes(); });
@@ -914,7 +977,7 @@ $('closeBtn').addEventListener('click', function () {
   var errs = missing(), r = exitReady();
   if (!r.ok && !errs.length) errs.push(r.msg);
   if (errs.length) { $('finalMsg').innerHTML = '<div class="msg bad">برای ثبت نهایی این موارد کامل شود:<br>• ' + errs.map(esc).join('<br>• ') + '</div>'; toast('هنوز قابل ثبت نهایی نیست.', 'bad'); return; }
-  if (!confirm('ماموریت ثبت نهایی شود؟ بعد از آن جدول و کسری‌ها قابل تغییر نیست.')) return;
+  if (!confirm('ماموریت ثبت نهایی شود؟ بعد از آن جدول، کسری‌ها و اضافه‌ها قابل تغییر نیست.')) return;
   $('finalMsg').innerHTML = '';
   var idx = TIMES.map(function (t) { return t.key; }).indexOf('EXIT_DOC');
   if (MS().times.EXIT_DOC) doClose(); else recordTime(idx, document.querySelector('[data-t="' + idx + '"]'));
@@ -959,8 +1022,11 @@ function doClose() {
   // ۲) ارسال مستقیم بستن ماموریت و صبر برای تأیید سرور
   function sendClose() {
     var recount = {}, overNotes = {};
-    shortRows().forEach(function (r) { var x = s.recount[r.no] || {}; recount[r.no] = { c2: x.c2, c3: x.c3 == null ? null : x.c3, sp: x.sp || 0, reason: finalOf(r) < r.total ? x.reason : '' }; });
-    rows().forEach(function (r) { var x = s.rows[r.no]; if (x && x.overNote) overNotes[r.no] = x.overNote; });
+    shortRows().forEach(function (r) {
+      var x = s.recount[r.no] || {}, f = finalOf(r);
+      recount[r.no] = { c2: x.c2, c3: x.c3 == null ? null : x.c3, sp: x.sp || 0, reason: f < r.total ? x.reason : '',
+                        or: f > r.total ? (x.or || '') : '', oa: f > r.total ? (x.oa || '') : '', on: f > r.total ? (x.on || '') : '' };
+    });
     DB.seq++;
     var item = { type: 'CLOSE', id: ME.userID + '-' + mid + '-' + DB.seq + '-' + Date.now(), at: nowSrv(), exitDocNo: s.exitNo, recount: recount, overNotes: overNotes,
                  customerRep: s.custRep || '', mismatchNote: s.info.description || '' };
@@ -976,7 +1042,7 @@ function doClose() {
         if (res.serverNow) DB.offset = res.serverNow - Date.now();
         DB.lastSync = Date.now();
         save(); renderAll(); syncUi();
-        finModal('ok', 'ماموریت ثبت نهایی شد', s.status === 'CLOSED' ? 'همه‌ی اطلاعات به سرور رسید و ماموریت بسته شد.' : 'همه‌ی اطلاعات به سرور رسید. ماموریت بسته شد و کسری‌ها برای تأیید سرپرست ارسال شد.');
+        finModal('ok', 'ماموریت ثبت نهایی شد', s.status === 'CLOSED' ? 'همه‌ی اطلاعات به سرور رسید و ماموریت بسته شد.' : 'همه‌ی اطلاعات به سرور رسید. ماموریت بسته شد و کسری‌ها/اضافه‌ها برای تأیید سرپرست ارسال شد.');
       })
       .withFailureHandler(function (e) {
         if (done) return; done = true; clearTimeout(timer);
