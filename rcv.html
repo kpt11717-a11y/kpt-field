@@ -633,6 +633,12 @@ function recordTime(i, btn) {
   if (t.key === 'EXIT_DOC') { var r = exitReady(); if (!r.ok) { toast(r.msg, 'bad'); return; } }
   if (t.key === 'COLLECTION_END' && !confirm('بعد از «پایان جمع‌آوری» جدول قفل می‌شود و مقایسه با لیست نمایش داده می‌شود. ادامه می‌دهید؟')) return;
   var at = nowSrv();                                   // ساعت همان لحظه‌ی زدن دکمه
+  // تقدم زمان: هیچ مرحله‌ای قبل از زمان مرحله‌ی قبلش ثبت نمی‌شود (مساوی اشکال ندارد)
+  var prevEv = i > 0 ? s.times[TIMES[i - 1].key] : null;
+  if (prevEv && prevEv.at && at < prevEv.at) {
+    alert('زمان این مرحله (' + fmtTime(at) + ') قبل از زمان مرحله‌ی قبل «' + TIMES[i - 1].label + '» (' + prevEv.time + ') است.\nساعت و تاریخ گوشی را درست کنید و دوباره «ثبت زمان» را بزنید.');
+    return;
+  }
   btn.disabled = true; btn.textContent = 'در حال گرفتن موقعیت…';
   getGps().then(function (g) {
     var place = P().places[t.place];
