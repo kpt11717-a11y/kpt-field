@@ -249,8 +249,23 @@
 
     <h3>سند خروج</h3>
     <div class="form-row">
-      <div class="form-group"><label>شماره سند خروج</label><input type="text" id="exitNo" class="code"></div>
+      <div class="form-group"><label>تعداد سند خروج</label><select id="exitMode"><option value="one">یک سند برای کل ماموریت</option><option value="multi">چند سند خروج (به تفکیک کارتن)</option></select></div>
+      <div class="form-group" id="exitOneBox"><label>شماره سند خروج</label><input type="text" id="exitNo" class="code"></div>
       <div class="form-group"><label>دریافت سند خروج</label><div class="time-box" id="tb_EXIT_DOC"></div></div>
+    </div>
+    <div id="exitMulti" class="hidden">
+      <div class="form-row">
+        <div class="form-group"><label>افزودن شماره سند خروج</label><input type="text" id="exitAddNo" class="code" placeholder="شماره‌ی یک سند"></div>
+        <div class="form-group" style="flex:0 0 auto"><button type="button" id="exitAddBtn">+ افزودن سند</button></div>
+      </div>
+      <div id="exitDocList" style="display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px"></div>
+      <div class="form-row">
+        <div class="form-group"><label>سند برای ردیف‌های تیک‌خورده</label><select id="exitBulkDoc"></select></div>
+        <div class="form-group" style="flex:0 0 auto"><button type="button" id="exitBulkBtn">اعمال روی ردیف‌های تیک‌خورده</button></div>
+      </div>
+      <div class="tbl"><table class="grid" style="min-width:520px"><thead><tr><th><input type="checkbox" id="exitAll" title="انتخاب همه"></th><th>ردیف</th><th>شماره فنی</th><th>کیس / کارتن</th><th>مقدار نهایی</th><th>سند خروج</th></tr></thead>
+        <tbody id="exitRows"></tbody></table></div>
+      <p class="note">هر کیس/کارتنی که چیزی از آن جمع‌آوری شده باید سند خروج داشته باشد.</p>
     </div>
     <label class="chk"><input type="checkbox" id="exitOk"><span id="exitOkText">سند خروج دقیقاً با جدول جمع‌آوری بالا صادر شده است.</span></label>
 
@@ -961,10 +976,78 @@ function missing() {
   });
   return errs;
 }
+/* ---------------- سند خروج: یک سند برای کل ماموریت، یا چند سند به تفکیک کیس/کارتن ---------------- */
+function exitMulti() { return MS().exitMode === 'multi'; }
+function exitDocs() { var s = MS(); return s.exitDocs || (s.exitDocs = []); }
+function rowExit() { var s = MS(); return s.rowExit || (s.rowExit = {}); }
+function exitRowsNeed() { return rows().filter(function (r) { return finalOf(r) > 0; }); }     // ردیف‌هایی که چیزی از آن‌ها جمع شده
+function syncExitNo() { if (exitMulti()) MS().exitNo = exitDocs().join('، '); }
+function exitMultiCheck() {
+  var docs = exitDocs(), RE = rowExit(), need = exitRowsNeed();
+  if (!docs.length) return 'شماره‌ی سندهای خروج را اضافه کنید.';
+  var miss = need.filter(function (r) { return docs.indexOf(RE[r.no] || '') === -1; });
+  if (miss.length) return 'سند خروج ' + miss.length + ' ردیف مشخص نشده (ردیف ' + miss.slice(0, 6).map(function (r) { return r.no; }).join('، ') + (miss.length > 6 ? ' …' : '') + ').';
+  var unused = docs.filter(function (d) { return !need.some(function (r) { return RE[r.no] === d; }); });
+  if (unused.length) return 'سند ' + unused.join('، ') + ' به هیچ ردیفی داده نشده؛ به ردیفی بدهید یا حذفش کنید.';
+  return '';
+}
+function renderExitMulti() {
+  var s = MS(), on = exitMulti(), dis = closed() || !!s.times.EXIT_DOC;
+  $('exitMode').value = on ? 'multi' : 'one'; $('exitMode').disabled = dis;
+  $('exitOneBox').classList.toggle('hidden', on); $('exitMulti').classList.toggle('hidden', !on);
+  if (!on) return;
+  var docs = exitDocs(), RE = rowExit();
+  $('exitDocList').innerHTML = docs.length ? docs.map(function (d) {
+    var n = exitRowsNeed().filter(function (r) { return RE[r.no] === d; }).length;
+    return '<span class="pill" style="padding:3px 10px"><b class="code">' + esc(d) + '</b> — ' + n + ' ردیف' + (dis ? '' : ' <button type="button" class="sm" data-xdel="' + esc(d) + '" style="padding:0 7px;background:#b3261e">✕</button>') + '</span>';
+  }).join('') : '<span class="note">هنوز سندی اضافه نشده است.</span>';
+  var opts = function (cur) { return '<option value="">—</option>' + docs.map(function (d) { return '<option' + (cur === d ? ' selected' : '') + '>' + esc(d) + '</option>'; }).join(''); };
+  $('exitBulkDoc').innerHTML = opts('');
+  $('exitRows').innerHTML = exitRowsNeed().map(function (r) {
+    var cur = RE[r.no] || '';
+    return '<tr' + (cur && docs.indexOf(cur) !== -1 ? '' : ' style="background:#fff3d4"') + '><td><input type="checkbox" data-xchk="' + r.no + '"' + (dis ? ' disabled' : '') + ' style="width:auto"></td><td>' + r.no + '</td><td class="code">' + esc(r.pn) + '</td>' +
+      '<td>' + ((r.cs || r.bx) ? esc(r.cs) + ' / ' + esc(r.bx) : '—') + '</td><td>' + finalOf(r) + '</td><td><select data-xrow="' + r.no + '"' + (dis ? ' disabled' : '') + '>' + opts(cur) + '</select></td></tr>';
+  }).join('') || '<tr><td colspan="6" class="note">هنوز ردیفی جمع‌آوری نشده است.</td></tr>';
+  ['exitAddNo', 'exitAddBtn', 'exitBulkDoc', 'exitBulkBtn', 'exitAll'].forEach(function (id) { $(id).disabled = dis; });
+  $('exitAll').checked = false;
+}
+$('exitMode').addEventListener('change', function () {
+  var s = MS();
+  if (this.value === 'multi') { s.exitMode = 'multi'; if (!exitDocs().length && s.exitNo) exitDocs().push(s.exitNo); syncExitNo(); }
+  else { s.exitMode = 'one'; s.exitNo = exitDocs()[0] || s.exitNo || ''; }
+  save(); renderAll();
+});
+$('exitAddBtn').addEventListener('click', function () {
+  var v = $('exitAddNo').value.replace(/[۰-۹]/g, function (d) { return d.charCodeAt(0) - 1776; }).trim();
+  if (!v) return toast('شماره‌ی سند را بنویسید.', 'bad');
+  if (exitDocs().indexOf(v) !== -1) return toast('این سند از قبل اضافه شده است.', 'warn');
+  exitDocs().push(v); $('exitAddNo').value = ''; syncExitNo(); save(); renderAll();
+});
+$('exitAddNo').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); $('exitAddBtn').click(); } });
+$('exitBulkBtn').addEventListener('click', function () {
+  var d = $('exitBulkDoc').value; if (!d) return toast('سند را انتخاب کنید.', 'bad');
+  var n = 0; document.querySelectorAll('[data-xchk]').forEach(function (c) { if (c.checked) { rowExit()[c.getAttribute('data-xchk')] = d; n++; } });
+  if (!n) return toast('ردیفی تیک نخورده است.', 'warn');
+  save(); renderAll(); toast(n + ' ردیف ← سند ' + d, 'ok');
+});
+$('exitAll').addEventListener('change', function () { var v = this.checked; document.querySelectorAll('[data-xchk]').forEach(function (c) { c.checked = v; }); });
+$('exitMulti').addEventListener('change', function (e) {
+  var no = e.target.getAttribute && e.target.getAttribute('data-xrow'); if (no == null) return;
+  if (e.target.value) rowExit()[no] = e.target.value; else delete rowExit()[no];
+  save(); renderAll();
+});
+$('exitMulti').addEventListener('click', function (e) {
+  var d = e.target.getAttribute && e.target.getAttribute('data-xdel'); if (d == null) return;
+  if (!confirm('سند ' + d + ' حذف شود؟ ردیف‌هایش بی‌سند می‌شوند.')) return;
+  var docs = exitDocs(); docs.splice(docs.indexOf(d), 1);
+  var RE = rowExit(); Object.keys(RE).forEach(function (k) { if (RE[k] === d) delete RE[k]; });
+  syncExitNo(); save(); renderAll();
+});
 function exitReady() {
   var s = MS(), e = missing();
   if (e.length) return { ok: false, msg: 'قبل از سند خروج کامل شود: ' + e[0] + (e.length > 1 ? ' و ' + (e.length - 1) + ' مورد دیگر' : '') };
-  if (!s.exitNo) return { ok: false, msg: 'شماره‌ی سند خروج را وارد کنید.' };
+  if (exitMulti()) { var me = exitMultiCheck(); if (me) return { ok: false, msg: me }; }
+  else if (!s.exitNo) return { ok: false, msg: 'شماره‌ی سند خروج را وارد کنید.' };
   if (!s.exitOk) return { ok: false, msg: 'تطابق سند خروج با جدول را تأیید کنید.' };
   return { ok: true };
 }
@@ -972,6 +1055,7 @@ function renderExit() {
   var s = MS(), n = unresolvedRows().length, dis = closed() || !!s.times.EXIT_DOC;
   $('exitOkText').textContent = 'سند خروج دقیقاً با جدول جمع‌آوری بالا' + (n && revealed() ? '، همراه با ' + n + ' ردیف کسری/اضافه،' : '') + ' صادر شده است.';
   $('exitNo').disabled = dis; $('exitOk').disabled = dis;
+  renderExitMulti();
   $('closeBtn').disabled = closed() || !revealed();
   $('closeBtn').textContent = closed() ? (s.status === 'CLOSED' ? '✓ ثبت نهایی شد' : '✓ ثبت نهایی شد — کسری/اضافه در انتظار تأیید سرپرست') : 'ثبت نهایی (بستن ماموریت) — با ثبت زمان «دریافت سند خروج»';
 }
@@ -1034,7 +1118,9 @@ function doClose() {
                         or: f > r.total ? (x.or || '') : '', oa: f > r.total ? (x.oa || '') : '', on: f > r.total ? (x.on || '') : '' };
     });
     DB.seq++;
-    var item = { type: 'CLOSE', id: ME.userID + '-' + mid + '-' + DB.seq + '-' + Date.now(), at: nowSrv(), exitDocNo: s.exitNo, recount: recount, overNotes: overNotes,
+    var rowEx = null;                                                    // چند سند خروج: سند هر کیس/کارتن
+    if (s.exitMode === 'multi') { rowEx = {}; exitRowsNeed().forEach(function (r) { rowEx[r.no] = rowExit()[r.no] || ''; }); syncExitNo(); }
+    var item = { type: 'CLOSE', id: ME.userID + '-' + mid + '-' + DB.seq + '-' + Date.now(), at: nowSrv(), exitDocNo: s.exitNo, rowExit: rowEx, recount: recount, overNotes: overNotes,
                  customerRep: s.custRep || '', mismatchNote: s.info.description || '' };
     save();
     var done = false, timer = setTimeout(function () { if (done) return; done = true; fail('سرور جواب نداد (اینترنت ضعیف).', ''); }, 45000);
