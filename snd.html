@@ -1028,11 +1028,62 @@ window.onload = function () {
     $('gate').textContent = 'این فرم باید از داخل هاب یا برنامه‌ی KPT میدانی باز شود.';
     return;
   }
+  addForkliftBox_();
   bindInputs_();
   showList();
   refresh();
   flush();
 };
+
+/* ------------------------------ راننده‌ی لیفتراک (برای ارزیابی عملکرد) ------------------------------
+ * انتقال: «لیفتراک بارگیری» ؛ پالت خالی برگشتی: «لیفتراک تخلیه‌ی پالت» — بالای «توضیحات»، برای ثبت نهایی اجباری
+ * فهرست = نیروهای عملیاتی + «بیرون از تیم (بدون امتیاز)» — روی گوشی نگه داشته می‌شود تا بدون اینترنت هم باشد
+ */
+function flMode_(id) { const m = M(id); if (!m) return ''; if (m.typeID === MT.TRANSFER) return 'load'; return needPallet(id) ? 'unload' : ''; }
+function flLabel_(mode) { return mode === 'load' ? 'راننده‌ی لیفتراک بارگیری' : 'راننده‌ی لیفتراک تخلیه‌ی پالت'; }
+function addForkliftBox_() {
+  const box = document.createElement('div');
+  box.className = 'main-info hidden'; box.id = 'flBox';
+  box.innerHTML = '<div class="form-row"><div class="form-group"><label for="forklift" id="flLabel"></label><select id="forklift"></select></div></div>';
+  $('missionForm').appendChild(box);
+  $('forklift').addEventListener('change', function () {
+    const sel = this, id = CUR; if (!id) return;
+    setVal_('forkliftCode', sel.value);
+    setVal_('forkliftName', sel.value ? sel.options[sel.selectedIndex].text : '');
+    renderChips(); flush();
+  });
+  google.script.run
+    .withSuccessHandler(function (r) { ST.refs.fl = r; save_(); if (CUR) renderMission(); })
+    .withFailureHandler(function () {})
+    .flOptions(USER.userCode);
+}
+// انتخاب فعلی: ذخیره‌شده ← وگرنه پیش‌فرض شیفت (هنوز ذخیره نشده)
+function flCurrent_(id) { const c = val(id, 'forkliftCode'); return c ? { code: c, name: val(id, 'forkliftName'), saved: true } : { code: (ST.refs.fl && ST.refs.fl.def) || '', name: '', saved: false }; }
+function renderForklift_(id) {
+  const box = $('flBox'), mode = flMode_(id);
+  if (!mode) { box.classList.add('hidden'); return; }
+  // جا: آخرین مرحله قبل از ثبت نهایی (بالای «توضیحات») — برای انتقال و پالت برگشتی
+  const anchor = document.querySelector('#missionForm .description-section');
+  if (box.nextSibling !== anchor) anchor.parentNode.insertBefore(box, anchor);
+  box.classList.remove('hidden');
+  $('flLabel').innerHTML = flLabel_(mode) + ' <span style="color:#c0392b">*</span>';
+  const sel = $('forklift');
+  if (document.activeElement === sel) return;
+  const fl = ST.refs.fl, cur = flCurrent_(id);
+  const people = fl ? fl.people.slice() : [];
+  if (fl) people.push(fl.out);
+  if (cur.code && !people.some(function (p) { return p.code === cur.code; })) people.push({ code: cur.code, name: cur.name || cur.code });
+  sel.innerHTML = '<option value="">' + (fl ? 'انتخاب کنید' : 'فهرست هنوز دریافت نشده (اینترنت)') + '</option>' +
+    people.map(function (p) { return '<option value="' + esc(p.code) + '">' + esc(p.name) + '</option>'; }).join('');
+  sel.value = cur.code || '';
+}
+// قبل از زمانی که کار لیفتراک انجام می‌شود (و در ثبت نهایی): انتخاب لازم است؛ پیش‌فرضِ انتخاب‌شده همین‌جا ذخیره می‌شود
+function flEnsure_(id) {
+  const sel = $('forklift');
+  if (!sel || !sel.value) { alert('اول «' + flLabel_(flMode_(id)) + '» را از فهرست انتخاب کنید (اگر کسی بیرون از تیم انجام داده، «بیرون از تیم (بدون امتیاز)»).'); return false; }
+  if (val(id, 'forkliftCode') !== sel.value) { setVal_('forkliftCode', sel.value); setVal_('forkliftName', sel.options[sel.selectedIndex].text); }
+  return true;
+}
 
 setInterval(function () { flush(); }, 15000);
 setInterval(function () { if (!CUR && document.visibilityState !== 'hidden') refresh(); }, 60000);
@@ -1058,7 +1109,8 @@ function refresh(btn) {
       if (btn) { btn.disabled = false; btn.textContent = '🔄 بروزرسانی'; }
       // لیست پالت‌ها فقط وقتی عوض شده باشد دوباره فرستاده می‌شود (حجم کمتر در اینترنت ضعیف)
       ST.refs = { vehicles: r.vehicles || [], delayReasons: r.delayReasons || [],
-                  pallets: r.pallets ? r.pallets : (ST.refs && ST.refs.pallets) || null, palletsHash: r.palletsHash || '' };
+                  pallets: r.pallets ? r.pallets : (ST.refs && ST.refs.pallets) || null, palletsHash: r.palletsHash || '',
+                  fl: (ST.refs && ST.refs.fl) || null };          // فهرست لیفتراک جدا گرفته می‌شود
       const seen = {};
       (r.missions || []).forEach(function (m) { seen[m.draftID] = true; ST.missions[m.draftID] = m; });
       ST.order = (r.missions || []).map(function (m) { return m.draftID; });
@@ -1250,6 +1302,7 @@ function renderMission() {
   $('palletSection').classList.toggle('hidden', !needPallet(id));
   if (document.activeElement !== $('palletCount')) $('palletCount').value = val(id, 'palletCount');
   renderPallets_();
+  renderForklift_(id);
 
   const err = l.err;
   $('mErr').classList.toggle('hidden', !err);
@@ -1398,6 +1451,7 @@ function finalize_() {
   if (Number(val(id, 'endKM')) < Number(val(id, 'startKM'))) return alert('کیلومتر پایان نمی‌تواند کمتر از کیلومتر شروع باشد.');
   if (needPallet(id)) { const pe = palletError_(id); if (pe) return alert(pe); }
   else if (m.typeID === MT.SEND && val(id, 'palletCount')) { setVal_('palletCount', ''); }
+  if (flMode_(id) && !flEnsure_(id)) return;
   if (!confirm('ثبت نهایی ماموریت ' + id + '؟')) return;
   sendFinal_(id);
 }
@@ -1405,7 +1459,7 @@ function finalize_() {
 function sendFinal_(id) {
   const l = L(id);
   // همه‌ی مقادیر فرم و زمان‌های ارسال‌نشده همراه ثبت نهایی فرستاده می‌شوند
-  ['vehicle', 'startKM', 'endKM', 'delayReason', 'notes', 'palletCount'].forEach(function (f) { l.pend.vals[f] = val(id, f); });
+  ['vehicle', 'startKM', 'endKM', 'delayReason', 'notes', 'palletCount', 'forkliftCode', 'forkliftName'].forEach(function (f) { l.pend.vals[f] = val(id, f); });
   l.err = '';
   save_();
   const sent = JSON.parse(JSON.stringify(l.pend));
