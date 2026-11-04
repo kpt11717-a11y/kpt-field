@@ -119,6 +119,15 @@
   table.pick tr.go{cursor:pointer}
   table.pick tr.go:hover td{background:#e8f0fa}
   table.pick td.st{font-size:15px}
+  table.grid.cg{min-width:0}
+  table.grid.cg input.cnt{width:84px;font-size:14px}
+  .search-hits{max-height:260px;overflow:auto}
+  details.pk{margin-top:4px;color:#6b7785;font-size:11.5px;font-weight:normal}
+  details.pk summary{cursor:pointer}
+  details.pk .form-row{margin:4px 0 0;opacity:.8}
+  details.pk .form-group{min-width:90px}
+  details.pk label{font-weight:normal}
+  @media (max-width:600px){table.grid.cg .dsc{display:none}}
 </style>
 </head>
 <body>
@@ -172,27 +181,20 @@
     <h3>زمان‌ها — قبل از جمع‌آوری</h3>
     <div class="form-row" id="times1"></div>
 
-    <h3>لیست برداشت</h3>
+
+
+    <h3>جدول جمع‌آوری</h3>
+    <p class="note" id="gridNote"></p>
     <div class="pick-head">
       <span id="pickCount" class="note"></span><div class="pick-bar"><i id="pickBar"></i></div>
       <label class="note" style="white-space:nowrap"><input type="checkbox" id="pickLeft"> فقط باقی‌مانده‌ها</label>
     </div>
-    <div class="tbl" style="max-height:320px;overflow:auto">
-      <table class="grid pick">
-        <thead><tr><th>ردیف</th><th>شماره فنی</th><th>شرح فارسی</th><th id="pickBoxTh">کیس / کارتن</th><th>وضعیت</th></tr></thead>
-        <tbody id="pickBody"></tbody>
-      </table>
-    </div>
-    <p class="note">تعداد لیست نمایش داده نمی‌شود (شمارش کور). با لمس هر ردیف، شماره فنی و کیس/کارتن در پنل ثبت پر می‌شود.</p>
-
-    <h3>جدول جمع‌آوری</h3>
-    <p class="note" id="gridNote"></p>
     <div class="entry" id="entryPanel">
       <div class="form-row">
         <div class="form-group" style="flex:2;position:relative">
-          <label>شماره فنی (از روی قطعه یا لیبل)</label>
+          <label>جستجو: شماره فنی، شرح، کیس یا کارتن</label>
           <div style="display:flex;gap:6px">
-            <input type="text" id="ePart" class="code" placeholder="تایپ یا اسکن شماره فنی…" autocomplete="off" style="font-size:15px">
+            <input type="text" id="ePart" class="code" placeholder="تایپ یا اسکن…" autocomplete="off" style="font-size:15px">
             <label class="qr" id="qrBtn" title="عکس از QR">📷<input type="file" id="qrShot" accept="image/*" capture="environment"></label>
           </div>
           <div class="search-hits" id="hits"></div>
@@ -201,51 +203,39 @@
         <div class="form-group"><label>کیس / کارتن</label><select id="eBox" disabled><option value="">اول شماره فنی</option></select></div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label>تعداد بسته</label><input type="number" id="ePk" min="1" inputmode="numeric" disabled></div>
-        <div class="form-group"><label>تعداد در بسته</label><input type="number" id="ePer" min="1" inputmode="numeric" disabled></div>
-        <div class="form-group"><label>تعداد کل</label><input type="text" id="eTot" disabled></div>
+        <div class="form-group"><label id="eQtyLbl">تعداد شمارش</label><input type="number" id="eQty" min="0" step="any" inputmode="decimal" disabled>
+          <details class="pk" id="pkBox"><summary>ورود با بسته (اختیاری)</summary><div class="form-row">
+            <div class="form-group"><label>تعداد بسته</label><input type="number" id="ePk" min="1" inputmode="numeric" disabled></div>
+            <div class="form-group"><label>تعداد در بسته</label><input type="number" id="ePer" min="0" step="any" inputmode="decimal" disabled></div>
+          </div></details></div>
         <div class="form-group" style="flex:2"><label>توضیحات</label><input type="text" id="eNote" disabled></div>
       </div>
-      <button type="button" id="eAdd" disabled>افزودن به جدول</button>
+      <button type="button" id="eAdd" disabled>ثبت و بررسی ردیف</button>
       <button type="button" id="eCancel" class="hidden" style="background:#6b7785">انصراف از ویرایش</button>
     </div>
     <div class="tbl" style="margin-top:10px">
-      <table class="grid">
+      <table class="grid cg">
         <thead><tr>
-          <th>ردیف</th><th>کنترل</th><th>شماره فنی</th><th>کیس</th><th>کارتن</th><th>شرح فارسی</th>
-          <th>تعداد بسته</th><th>تعداد در بسته</th><th>تعداد کل</th><th>باقی مانده</th><th>توضیحات</th><th></th>
+          <th>ردیف</th><th>شماره فنی</th><th>کیس</th><th>کارتن</th><th>تعداد شمارش</th><th>کنترل</th><th class="dsc">شرح فارسی</th><th class="dsc">توضیحات</th>
         </tr></thead>
         <tbody id="gridBody"></tbody>
       </table>
     </div>
-
-    <h3>زمان‌ها — بعد از جمع‌آوری</h3>
-    <div class="form-row" id="times2"></div>
-
-    <div id="cmpSection" class="hidden">
-      <h3>مقایسه با لیست درخواست</h3>
-      <p class="note">تعداد لیست درخواست فقط از این مرحله به بعد نمایش داده می‌شود.</p>
-      <div id="cmpSummary"></div>
-      <div class="tbl"><table class="grid" style="min-width:760px">
-        <thead><tr><th>ردیف لیست</th><th>شماره فنی</th><th>کیس / کارتن</th><th>شرح فارسی</th><th>تعداد لیست</th><th>جمع‌آوری‌شده</th><th>باقی مانده</th><th>وضعیت</th><th>علت اضافه</th></tr></thead>
-        <tbody id="cmpBody"></tbody>
-      </table></div>
-    </div>
+    <div class="button-section" id="checkBox"><button type="button" id="checkBtn">بررسی شمارش</button></div>
 
     <div id="shortSection" class="hidden">
-      <h3>کنترل کسری و اضافه (شمارش دوم با حضور نماینده انبار مشتری)</h3>
-      <p class="note">ردیف‌هایی که «باقی مانده» دارند با حضور نماینده‌ی انبار مشتری دوباره شمرده می‌شوند (اگر شمارش دوم با اول برابر نبود، شمارش سوم لازم است).
-        در شمارش دوم/سوم فقط <b>همان اجناس کارتن</b> را بشمارید. اگر انباردار مشتری بعد از اعلام کسری چیزی تحویل داد (مثلاً از ذخیره‌ی خودش)، تعدادش را در ستون «تحویل تکمیلی» بنویسید.
-        <b>مقدار نهایی = آخرین شمارش + تحویل تکمیلی.</b> اگر مقدار نهایی به تعداد لیست برسد، کسری برطرف می‌شود و علت لازم نیست.<br>
-        ردیف‌هایی که <b>اضافه</b> دارند هم همین‌طور دوباره شمرده می‌شوند؛ اگر بعد از شمارش دوم/سوم هنوز اضافه بود، علت و <b>تکلیف جنس اضافه</b> (برگرداندن در محل یا آوردن به KPT) لازم است و برای تأیید سرپرست می‌رود.</p>
+      <h3 id="shortTitle">شمارش دوم و سوم</h3>
       <div class="form-row"><div class="form-group" style="max-width:360px"><label>نام نماینده‌ی انبار مشتری (حاضر در شمارش دوم)</label><input type="text" id="custRep"></div></div>
-      <div class="tbl"><table class="grid" style="min-width:900px">
-        <thead><tr><th>ردیف</th><th>شماره فنی</th><th>کیس / کارتن</th><th>تعداد کل</th><th>شمارش اول</th><th>باقی مانده</th><th>شمارش دوم</th><th>شمارش سوم</th><th>تحویل تکمیلی (+)</th><th>مقدار نهایی / کسری / اضافه</th><th>علت (و تکلیف اضافه)</th></tr></thead>
+      <div class="tbl"><table class="grid" style="min-width:760px">
+        <thead id="shortHead"></thead>
         <tbody id="shortBody"></tbody>
       </table></div>
       <div id="rcMsg"></div>
-      <div class="button-section"><button type="button" id="rcBtn">ثبت شمارش دوم و مقدار نهایی</button></div>
+      <div class="button-section"><button type="button" id="rcBtn">ثبت شمارش و نمایش نتیجه</button></div>
     </div>
+
+    <h3>زمان‌ها — بعد از شمارش</h3>
+    <div class="form-row" id="times2"></div>
 
     <h3>سند خروج</h3>
     <div class="form-row">
@@ -269,7 +259,7 @@
     </div>
     <label class="chk"><input type="checkbox" id="exitOk"><span id="exitOkText">سند خروج دقیقاً با جدول جمع‌آوری بالا صادر شده است.</span></label>
 
-    <h3>زمان‌ها — خروج و انتقال</h3>
+    <h3>زمان‌ها — پایان جمع‌آوری، خروج و انتقال</h3>
     <div class="form-row" id="times3"></div>
 
     <h3>توضیحات</h3>
@@ -314,10 +304,10 @@ var TIMES = [
   { key: 'START',           label: 'شروع ماموریت',            box: 'times1', place: 'home' },
   { key: 'CUST_ARRIVAL',    label: 'رسیدن به انبار مشتری',    box: 'times1', place: 'site' },
   { key: 'PREP_START',      label: 'شروع آماده‌سازی و شمارش', box: 'times1', place: 'site' },
-  { key: 'COLLECTION_END',  label: 'پایان جمع‌آوری',           box: 'times2', place: 'site' },
   { key: 'INSPECTION',      label: 'اعلام بازرسی',             box: 'times2', place: 'site' },
   { key: 'WAREHOUSE_EMAIL', label: 'ارسال ایمیل از انبار',     box: 'times2', place: 'site' },
   { key: 'EXIT_DOC',        label: 'دریافت سند خروج',          box: 'exit',   place: 'site' },
+  { key: 'COLLECTION_END',  label: 'پایان جمع‌آوری',           box: 'times3', place: 'site' },
   { key: 'SECURITY_CHECK',  label: 'کنترل انتظامات',           box: 'times3', place: 'site' },
   { key: 'SITE_EXIT',       label: 'خروج از سایت مشتری',       box: 'times3', place: 'site' },
   { key: 'KPT_ARRIVAL',     label: 'ساعت ورود به قوا',         box: 'times3', place: 'home' }
@@ -572,6 +562,8 @@ $('changeBtn').addEventListener('click', function () {
 /* ---------------- ۲) فرم ---------------- */
 function openForm() {
   var p = P(), h = p.header, s = MS();
+  // ماموریتی که قبل از این نسخه از «پایان جمع‌آوری» گذشته: از همان نقطه با روال جدید ادامه می‌یابد
+  if (s.times.COLLECTION_END && !s.cntChecked) { s.cntChecked = true; s.rcFinal = !!s.rcDone; save(); }
   $('queueSection').classList.add('hidden'); $('formSection').classList.remove('hidden');
   $('selLabel').textContent = p.missionID + ' — شماره ' + h.docNo + ' — ' + h.warehouseName + (s.status === 'TRANSFERRED' ? ' — 🔁 منتقل شد به ' + (s.transferredTo || 'فرد دیگر') + ' (فقط خواندنی)' : s.status === 'GONE' ? ' — 🗑 روی سرور حذف شده (فقط خواندنی)' : '');
   $('hDocNo').textContent = h.docNo; $('hDate').textContent = h.docDate; $('hRelDate').textContent = h.releaseDate; $('hRelTime').textContent = h.releaseTime;
@@ -592,7 +584,7 @@ function openForm() {
   resetEntry(); renderAll();
 }
 // سند خروج گرفته شده ولی ثبت نهایی هنوز به سرور نرسیده: هشدار قرمز ثابت بالای فرم
-function notFinal() { var s = MS(); return !!s.times.EXIT_DOC && !closed(); }
+function notFinal() { var s = MS(); return !!s.times.EXIT_DOC && !!s.times.COLLECTION_END && !closed(); }
 function renderNotFinal() {
   var on = notFinal();
   $('notFinal').classList.toggle('hidden', !on);
@@ -602,7 +594,7 @@ function renderNotFinal() {
   if ($('nfBtn')) $('nfBtn').onclick = function () { doClose(); };
 }
 function renderAll() {
-  renderTimes(); renderPick(); renderGrid(); renderCompare(); renderShort(); renderExit(); renderNotFinal(); syncUi(); refreshMarks();
+  renderTimes(); renderGrid(); renderShort(); renderExit(); renderNotFinal(); syncUi(); refreshMarks();
   var dis = closed();
   INFO_FIELDS.forEach(function (k) { $(k).disabled = dis; });
 }
@@ -612,6 +604,7 @@ function canRecord(i) {
   var s = MS(), t = TIMES[i];
   if (s.times[t.key]) return false;
   if (i > 0 && !s.times[TIMES[i - 1].key]) return false;
+  if (t.key === 'INSPECTION' && !countFinal()) return false;
   if (t.key === 'EXIT_DOC') return exitReady().ok;
   return true;
 }
@@ -646,7 +639,7 @@ function getGps() {
 function recordTime(i, btn) {
   var t = TIMES[i], s = MS();
   if (t.key === 'EXIT_DOC') { var r = exitReady(); if (!r.ok) { toast(r.msg, 'bad'); return; } }
-  if (t.key === 'COLLECTION_END' && !confirm('بعد از «پایان جمع‌آوری» جدول قفل می‌شود و مقایسه با لیست نمایش داده می‌شود. ادامه می‌دهید؟')) return;
+  if (t.key === 'COLLECTION_END' && !confirm('با ثبت «پایان جمع‌آوری»، ماموریت ثبت نهایی می‌شود و اینترنت لازم است. ادامه می‌دهید؟')) return;
   var at = nowSrv();                                   // ساعت همان لحظه‌ی زدن دکمه
   // تقدم زمان: هیچ مرحله‌ای قبل از زمان مرحله‌ی قبلش ثبت نمی‌شود (مساوی اشکال ندارد)
   var prevEv = i > 0 ? s.times[TIMES[i - 1].key] : null;
@@ -668,102 +661,130 @@ function recordTime(i, btn) {
     var far = dist != null && dist > place.radius;
     toast(t.label + ': ' + ev.time + (far ? ' — ⚠️ خارج از محدوده' : ''), far ? 'warn' : 'ok');
     renderAll();
-    if (t.key === 'EXIT_DOC' || (t.key === 'KPT_ARRIVAL' && notFinal())) doClose();
+    if (t.key === 'COLLECTION_END' || (t.key === 'EXIT_DOC' && s.times.COLLECTION_END) || (t.key === 'KPT_ARRIVAL' && notFinal())) doClose();
   });
 }
 
 /* ---------------- جدول جمع‌آوری (ورود کور) ---------------- */
 var cur = null, editNo = null;
-function gridOpen() { return !!MS().times.PREP_START && !MS().times.COLLECTION_END && !closed(); }
-function revealed() { return !!MS().times.COLLECTION_END; }
+function gridOpen() { var s = MS(); return !!s.times.PREP_START && !s.cntChecked && !s.times.COLLECTION_END && !closed(); }
+function revealed() { return !!MS().rcDone || closed(); }                  // تعداد لیست فقط بعد از ثبت شمارش دوم/سوم دیده می‌شود
+function countFinal() { var s = MS(); return !!s.cntChecked && (!shortRows().length || !!s.rcFinal); }
 function uniqueParts() {
   var map = {}, out = [];
   rows().forEach(function (r) { if (!map[r.pn]) { map[r.pn] = { pn: r.pn, desc: r.desc, rows: [] }; out.push(map[r.pn]); } map[r.pn].rows.push(r); });
   return out;
 }
-/* ---------------- لیست برداشت: چه چیزهایی برای این ماموریت تقسیم شده (بدون تعداد) ---------------- */
-function renderPick() {
-  var s = MS(), list = rows(), man = MAN(), onlyLeft = $('pickLeft').checked;
-  var done = list.filter(function (r) { return s.rows[r.no]; }).length;
-  $('pickCount').textContent = done + ' از ' + list.length + (man ? ' قلم' : ' کارتن') + ' ثبت شده';
+/* ---------------- جدول جمع‌آوری: همه‌ی ردیف‌ها از قبل هستند؛ عدد مستقیم در جدول یا از جستجو وارد می‌شود ---------------- */
+function statusHtml(no) {
+  var s = MS(), r = rows().filter(function (y) { return y.no === no; })[0], c = counted(no), n = ((s.tries || {})[no] || []).length;
+  if (c == null) return '<span class="note">ثبت نشده</span>';
+  if (!s.cntChecked && s.retry === no) return '<span style="color:#c0564b;font-weight:bold">دوباره بشمارید</span>';
+  if (c === r.total) return n > 1 ? '<span style="color:#7a4f00;font-weight:bold">✔ مطابق — عدد عوض شد</span>' : '<span style="color:#3f8f6b;font-weight:bold">✔ مطابق</span>';
+  return '<span style="color:#c0564b;font-weight:bold">مغایر — برای بررسی</span>';
+}
+function renderProgress() {
+  var s = MS(), list = rows(), done = list.filter(function (r) { return s.rows[r.no]; }).length;
+  $('pickCount').textContent = done + ' از ' + list.length + (MAN() ? ' قلم' : ' کارتن') + ' ثبت شده';
   $('pickBar').style.width = Math.round(100 * done / Math.max(list.length, 1)) + '%';
-  $('pickBoxTh').classList.toggle('hidden', man);
-  var canPick = gridOpen();
-  $('pickBody').innerHTML = list.filter(function (r) { return !onlyLeft || !s.rows[r.no]; }).map(function (r) {
-    var ok = !!s.rows[r.no];
-    return '<tr data-pk="' + r.no + '" class="' + (ok ? 'done' : '') + (canPick ? ' go' : '') + '"><td>' + r.no + '</td><td class="code">' + esc(r.pn) + '</td>' +
-      '<td class="desc">' + esc(r.desc) + '</td>' + (man ? '' : '<td class="code">' + boxCell(r) + '</td>') +
-      '<td class="st">' + (ok ? '✅' : '⬜') + '</td></tr>';
-  }).join('') || '<tr><td colspan="5" class="note">' + (onlyLeft ? 'همه ثبت شده‌اند ✔' : 'ردیفی نیست.') + '</td></tr>';
-  document.querySelectorAll('[data-pk]').forEach(function (tr) {
-    tr.addEventListener('click', function () {
-      if (!gridOpen()) { toast(closed() || revealed() ? 'جمع‌آوری تمام شده است.' : 'اول زمان «شروع آماده‌سازی و شمارش» را ثبت کنید.', 'warn'); return; }
-      var no = Number(tr.getAttribute('data-pk')), r = rows().filter(function (y) { return y.no === no; })[0];
-      if (MS().rows[no]) { startEdit(no); return; }
-      resetEntry(); pickPart(r.pn, 'list');
-      $('eBox').value = String(no);
-      $('entryPanel').scrollIntoView({ block: 'center' });
-      setTimeout(function () { (MAN() ? $('ePer') : $('ePk')).focus(); }, 50);
-    });
+}
+function subOf(pn) { var t = 0, any = false; rows().forEach(function (r) { if (r.pn === pn && counted(r.no) != null) { t = r3(t + counted(r.no)); any = true; } }); return any ? t : '—'; }
+function updRow(no) {
+  var el = $('cnt_' + no), s = MS(), c = counted(no), r = rows().filter(function (y) { return y.no === no; })[0];
+  if ($('ct_' + no)) $('ct_' + no).innerHTML = statusHtml(no);
+  if (el && document.activeElement !== el) el.value = s.retry === no ? '' : (c == null ? '' : c);
+  var sub = document.querySelector('[data-sub="' + r.pn + '"]'); if (sub) sub.textContent = subOf(r.pn);
+  renderProgress();
+}
+function renderGrid() {
+  var s = MS(), open = gridOpen(), left = open && $('pickLeft').checked;
+  $('gridNote').textContent = !s.times.PREP_START ? 'جدول بعد از ثبت زمان «شروع آماده‌سازی و شمارش» باز می‌شود.' : open ? 'عدد هر کارتن را همان لحظه‌ی شمارش در جدول بزنید یا از جستجو پیدا کنید. اگر قطعه‌ای نیست، عدد 0 را وارد کنید.' : 'جدول شمارش اول قفل است.';
+  $('entryPanel').classList.toggle('hidden', !open);
+  $('checkBox').classList.toggle('hidden', !open);
+  $('pickLeft').parentNode.classList.toggle('hidden', !open);
+  renderProgress();
+  var all = rows(), html = '';
+  all.forEach(function (r, i) {
+    var x = s.rows[r.no] || {}, c = counted(r.no);
+    if (!(left && s.rows[r.no] && s.retry !== r.no)) {
+      html += '<tr' + (s.retry === r.no && open ? ' class="hit"' : '') + '><td>' + r.no + '</td><td class="code">' + esc(r.pn) + '</td><td class="code">' + (esc(r.cs) || '—') + '</td><td class="code">' + (esc(r.bx) || '—') + '</td><td>' +
+        (open ? '<input type="number" min="0" step="any" inputmode="decimal" class="cnt" id="cnt_' + r.no + '" data-cnt="' + r.no + '" aria-label="تعداد شمارش ' + esc(boxLbl(r) || r.pn) + '" value="' + (s.retry === r.no || c == null ? '' : c) + '">' : '<b>' + (c == null ? '—' : c) + '</b>') + (MAN() ? ' ' + esc(r.unit) : '') + '</td>' +
+        '<td id="ct_' + r.no + '">' + statusHtml(r.no) + '</td><td class="desc dsc">' + esc(r.desc) + '</td><td class="desc dsc">' + esc(x.note || '') + (x.q ? ' <span data-q="' + esc(x.q) + '"></span>' : '') + '</td></tr>';
+    }
+    var next = all[i + 1];
+    if (!left && (!next || next.pn !== r.pn)) html += '<tr class="sub"><td colspan="4" style="text-align:left">جمع <span class="code">' + esc(r.pn) + '</span></td><td data-sub="' + esc(r.pn) + '">' + subOf(r.pn) + '</td><td colspan="3"></td></tr>';
+  });
+  $('gridBody').innerHTML = html || '<tr><td colspan="8" class="note">همه ثبت شده‌اند ✔</td></tr>';
+  var ins = document.querySelectorAll('[data-cnt]');
+  Array.prototype.forEach.call(ins, function (el, i) {
+    el.addEventListener('change', function () { onCnt(el); });
+    el.addEventListener('keydown', function (e) { if (e.key !== 'Enter') return; e.preventDefault(); if (ins[i + 1]) ins[i + 1].focus(); else el.blur(); });
   });
 }
-$('pickLeft').addEventListener('change', renderPick);
-
-function renderGrid() {
-  var s = MS(), open = gridOpen(), rev = revealed();
-  $('gridNote').textContent = closed() || rev ? 'جمع‌آوری تمام شده و جدول قفل است. نتیجه‌ی مقایسه پایین‌تر آمده است.' :
-    (open ? (MAN() ? 'هر قطعه‌ای که برداشته می‌شود: شماره فنی را وارد کنید و مقدار را با واحدش بزنید (اعشار مجاز است). شماره فنی خارج از لیست پذیرفته نمی‌شود.' : 'هر قطعه‌ای که برداشته می‌شود: شماره فنی را از روی قطعه وارد کنید، کیس/کارتن را انتخاب کنید و تعداد را بزنید. شماره فنی خارج از لیست پذیرفته نمی‌شود.') :
-            'جدول بعد از ثبت زمان «شروع آماده‌سازی و شمارش» باز می‌شود.');
-  $('entryPanel').classList.toggle('hidden', !open);
-  var list = rows().filter(function (r) { return s.rows[r.no]; }), html = '', sub = 0, subExp = 0, seq = 0;
-  list.forEach(function (r, i) {
-    var x = s.rows[r.no], c = counted(r.no), rem = r3(r.total - c);
-    seq++; sub = r3(sub + c); subExp = r3(subExp + r.total);
-    html += '<tr' + (editNo === r.no ? ' class="hit"' : '') + '><td>' + seq + '</td>' +
-      '<td class="ctl">' + (rev ? (rem === 0 ? '✔' : '<span style="color:#c0564b">✖</span>') : '') + '</td>' +
-      '<td class="code">' + esc(r.pn) + '</td><td class="code">' + (esc(r.cs) || '—') + '</td><td class="code">' + (esc(r.bx) || '—') + '</td>' +
-      '<td class="desc">' + esc(r.desc) + '</td><td>' + (MAN() ? '—' : x.pk) + '</td><td>' + (MAN() ? '—' : x.per) + '</td><td><b>' + c + '</b>' + (MAN() ? ' ' + esc(r.unit) : '') + '</td>' +
-      '<td class="rem ' + (rev ? (rem > 0 ? 'pos' : rem < 0 ? 'neg' : '') : '') + '">' + (rev ? rem : '') + '</td>' +
-      '<td class="desc">' + esc(x.note || '') + (x.q ? ' <span data-q="' + esc(x.q) + '"></span>' : '') + '</td>' +
-      '<td>' + (open ? '<button type="button" class="sm" data-edit="' + r.no + '">ویرایش</button><button type="button" class="sm del" data-del="' + r.no + '">حذف</button>' : '') + '</td></tr>';
-    var next = list[i + 1];
-    if (!next || next.pn !== r.pn) {
-      html += '<tr class="sub"><td colspan="8" style="text-align:left">جمع <span class="code">' + esc(r.pn) + '</span></td><td>' + sub + '</td><td class="rem">' + (rev ? r3(subExp - sub) : '') + '</td><td colspan="2"></td></tr>';
-      sub = 0; subExp = 0;
-    }
-  });
-  $('gridBody').innerHTML = html || '<tr><td colspan="12" class="note">هنوز قطعه‌ای ثبت نشده است.</td></tr>';
-  document.querySelectorAll('[data-edit]').forEach(function (b) { b.addEventListener('click', function () { startEdit(Number(b.getAttribute('data-edit'))); }); });
-  document.querySelectorAll('[data-del]').forEach(function (b) {
-    b.addEventListener('click', function () {
-      var no = Number(b.getAttribute('data-del')), r = rows().filter(function (y) { return y.no === no; })[0];
-      if (!confirm('ردیف ' + r.pn + (boxLbl(r) ? ' — ' + boxLbl(r) : '') + ' حذف شود؟')) return;
-      delete MS().rows[no]; delete MS().recount[no]; save();
-      enqueue({ type: 'ROW', rowNo: no, del: true }); renderAll();
-    });
-  });
+$('pickLeft').addEventListener('change', renderGrid);
+// ثبت یک عدد و بررسی خودکار با لیست (بدون نمایش تعداد لیست). مغایرت اول: «دوباره بشمارید»؛ عدد دوم هرچه باشد ثبت می‌شود
+function saveCount(no, pk, per, note, method) {
+  var s = MS(), r = rows().filter(function (y) { return y.no === no; })[0], q = r3(pk * per), isRetry = s.retry === no;
+  if (!isRetry && s.rows[no] && counted(no) === q && (s.rows[no].note || '') === note) return 'same';
+  var prev = s.retry;
+  s.tries = s.tries || {};
+  (s.tries[no] = s.tries[no] || []).push(q);
+  s.rows[no] = { pk: pk, per: per, note: note, method: method };
+  delete s.recount[no];
+  s.rows[no].q = enqueue({ type: 'ROW', rowNo: no, pk: pk, per: per, note: note, method: method, tries: s.tries[no].join(' → ') });
+  var res = 'ok';
+  if (q !== r.total && !isRetry) { s.retry = no; res = 'retry'; }
+  else if (isRetry) s.retry = null;
+  save();
+  if (prev && prev !== no) updRow(prev);
+  return res;
+}
+function onCnt(el) {
+  var no = Number(el.getAttribute('data-cnt')), s = MS(), q = num(el.value), r = rows().filter(function (y) { return y.no === no; })[0];
+  if (q === null) {
+    if (s.retry === no || !s.rows[no]) return;
+    delete s.rows[no]; delete s.recount[no]; save();
+    enqueue({ type: 'ROW', rowNo: no, del: true }); updRow(no); return;
+  }
+  var bad = q < 0 || (MAN() && r.unit === 'عدد' && Math.floor(q) !== q);
+  if (bad) { toast(q < 0 ? 'عدد منفی قبول نیست.' : 'واحد این قطعه «عدد» است؛ اعشار قبول نیست.', 'bad'); el.value = s.retry === no || counted(no) == null ? '' : counted(no); return; }
+  var res = saveCount(no, 1, q, (s.rows[no] || {}).note || '', (s.rows[no] || {}).method || 'list');
+  if (res === 'retry') {
+    el.value = ''; updRow(no);
+    toast((boxLbl(r) || r.pn) + ' با لیست نمی‌خواند. دوباره بشمارید و عدد را وارد کنید.', 'bad');
+    setTimeout(function () { el.focus(); }, 0);
+  } else updRow(no);
 }
 function resetEntry() {
   cur = null; editNo = null;
   $('ePart').value = ''; $('hits').innerHTML = ''; $('eDesc').innerHTML = '';
   $('eBox').innerHTML = '<option value="">اول شماره فنی</option>'; $('eBox').disabled = true;
-  ['ePk', 'ePer', 'eNote'].forEach(function (k) { $(k).value = ''; $(k).disabled = true; });
-  $('eTot').value = ''; $('eAdd').disabled = true; $('eAdd').textContent = 'افزودن به جدول'; $('eCancel').classList.add('hidden');
+  ['eQty', 'ePk', 'ePer', 'eNote'].forEach(function (k) { $(k).value = ''; $(k).disabled = true; });
+  $('pkBox').open = false; $('eAdd').disabled = true; $('eCancel').classList.add('hidden');
 }
 var entryMethod = 'manual';
-function pickPart(pn, method) {
+function pickPart(pn, method, no) {
   var g = uniqueParts().filter(function (x) { return x.pn === pn; })[0]; if (!g) return;
   cur = g; entryMethod = method || 'manual'; $('ePart').value = g.pn; $('hits').innerHTML = '';
   $('eDesc').innerHTML = '<span style="color:#3f8f6b;font-weight:bold">✔ در لیست هست:</span> ' + esc(g.desc);
   var s = MS();
   $('eBox').innerHTML = (g.rows.length > 1 ? '<option value="">انتخاب کنید</option>' : '') + g.rows.map(function (r) {
-    return '<option value="' + r.no + '">' + (esc(boxLbl(r)) || 'بدون کیس') + (s.rows[r.no] && editNo !== r.no ? ' — قبلاً ثبت شده' : '') + '</option>';
+    return '<option value="' + r.no + '">' + (esc(boxLbl(r)) || 'بدون کیس') + (s.rows[r.no] ? ' — قبلاً ثبت شده' : '') + '</option>';
   }).join('');
   $('eBox').disabled = false;
-  ['ePk', 'ePer', 'eNote'].forEach(function (k) { $(k).disabled = false; });
+  ['eQty', 'ePk', 'ePer', 'eNote'].forEach(function (k) { $(k).disabled = false; });
   $('eAdd').disabled = false;
-  if (MAN()) { $('ePk').value = 1; $('ePer').previousElementSibling.textContent = 'مقدار (' + g.rows[0].unit + ')'; }
-  setTimeout(function () { (MAN() ? $('ePer') : (g.rows.length > 1 && editNo == null ? $('eBox') : $('ePk'))).focus(); }, 0);
+  if (no) $('eBox').value = String(no);
+  if (MAN()) $('eQtyLbl').textContent = 'مقدار (' + g.rows[0].unit + ')';
+  setTimeout(function () { (g.rows.length > 1 && !no && !MAN() ? $('eBox') : $('eQty')).focus(); }, 0);
+}
+// جستجوی ردیفی: شماره فنی، شرح، کیس یا کارتن (بدون نمایش تعداد)
+function rowHits(q) {
+  var w = nf(q).split(' ').filter(Boolean);
+  return rows().filter(function (r) {
+    var d = nf(r.desc), hay = np(r.pn) + ' ' + np(r.cs) + ' ' + np(r.bx);
+    return w.every(function (x) { return d.indexOf(x) !== -1 || (np(x) && hay.indexOf(np(x)) !== -1); });
+  });
 }
 function hitsFor(q) {
   var qp = np(q), qf = nf(q);
@@ -783,11 +804,13 @@ function hl(pn, q) {
 }
 $('ePart').addEventListener('input', function () {
   var q = this.value.trim();
-  if (cur && q !== cur.pn) { var keep = q, ed = editNo; resetEntry(); editNo = ed; $('ePart').value = keep; }
+  if (cur && q !== cur.pn) { var keep = q; resetEntry(); $('ePart').value = keep; }
   if (!q) { $('hits').innerHTML = ''; return; }
-  var h = hitsFor(q).slice(0, 8);      // پیشنهاد: فقط شماره فنی و شرح — بدون تعداد
-  $('hits').innerHTML = h.map(function (x) { return '<div data-pick="' + esc(x.g.pn) + '"><span class="code">' + hl(x.g.pn, q) + '</span> — ' + esc(x.g.desc) + '</div>'; }).join('');
-  document.querySelectorAll('[data-pick]').forEach(function (el) { el.addEventListener('click', function () { pickPart(el.getAttribute('data-pick'), 'manual'); }); });
+  var s = MS();
+  $('hits').innerHTML = rowHits(q).map(function (r) {
+    return '<div data-pick="' + r.no + '"><span class="code">' + hl(r.pn, q) + '</span> — ' + esc(r.desc) + (boxLbl(r) ? ' — <b>' + esc(boxLbl(r)) + '</b>' : '') + (s.rows[r.no] ? ' ✅' : ' ⬜') + '</div>';
+  }).join('');
+  document.querySelectorAll('[data-pick]').forEach(function (el) { el.addEventListener('click', function () { var r = rows().filter(function (y) { return y.no === Number(el.getAttribute('data-pick')); })[0]; pickPart(r.pn, 'manual', r.no); }); });
 });
 $('ePart').addEventListener('keydown', function (e) {
   if (e.key !== 'Enter') return;
@@ -795,54 +818,52 @@ $('ePart').addEventListener('keydown', function (e) {
   var q = this.value.trim(); if (!q) return;
   var exact = uniqueParts().filter(function (g) { return np(g.pn) === np(q); })[0];
   if (exact) { pickPart(exact.pn, 'scan'); return; }                // Enter با شماره‌ی کامل = معمولاً بارکدخوان
-  var h = hitsFor(q);
-  if (h.length === 1) { pickPart(h[0].g.pn, 'manual'); return; }
-  if (h.length > 1) { toast('چند قطعه با این متن هست — از فهرست انتخاب کنید.', 'warn'); return; }
+  var h = rowHits(q);
+  if (h.length === 1) { pickPart(h[0].pn, 'manual', h[0].no); return; }
+  if (h.length > 1) { toast('چند ردیف با این متن هست — از فهرست انتخاب کنید.', 'warn'); return; }
   var owner = null; Object.keys(P().others || {}).forEach(function (k) { if (np(k) === np(q)) owner = P().others[k]; });
   toast(owner ? 'این شماره فنی سهم ماموریت دیگری است: ' + owner : 'این شماره فنی در لیست درخواست نیست — ثبت نمی‌شود.', 'bad');
   this.select();
 });
-$('eBox').addEventListener('change', function () { if (this.value) $('ePk').focus(); });
-function updTot() { var a = num($('ePk').value), b = num($('ePer').value); $('eTot').value = (a != null && b != null) ? r3(a * b) : ''; }
+$('eBox').addEventListener('change', function () { if (this.value) $('eQty').focus(); });
+function updTot() { var a = num($('ePk').value), b = num($('ePer').value); if (a != null && b != null) $('eQty').value = r3(a * b); }
 // چیدمان پنل ورود بر اساس نوع لیست
 function setEntryMode() {
   var man = MAN();
-  [$('eBox'), $('ePk'), $('eTot')].forEach(function (el) { el.parentNode.classList.toggle('hidden', man); });
-  $('ePer').previousElementSibling.textContent = man ? 'مقدار' : 'تعداد در بسته';
-  $('ePer').setAttribute('inputmode', man ? 'decimal' : 'numeric');
-  $('ePer').setAttribute('step', man ? 'any' : '1');
-  $('ePer').setAttribute('min', man ? '0' : '1');
+  $('eBox').parentNode.classList.toggle('hidden', man);
+  $('pkBox').classList.toggle('hidden', man);
+  $('eQtyLbl').textContent = man ? 'مقدار' : 'تعداد شمارش';
 }
 $('ePk').addEventListener('input', updTot); $('ePer').addEventListener('input', updTot);
-$('ePk').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); $('ePer').focus(); } });
-$('ePer').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); $('eNote').focus(); } });
+$('eQty').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); $('eAdd').click(); } });
 $('eNote').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); $('eAdd').click(); } });
 $('eCancel').addEventListener('click', function () { resetEntry(); renderGrid(); });
 $('eAdd').addEventListener('click', function () {
-  if (!cur) { toast('شماره فنی را وارد کنید.', 'bad'); return; }
-  var no = Number($('eBox').value), pk = num($('ePk').value), per = num($('ePer').value);
+  if (!cur) { toast('ردیف را از جستجو انتخاب کنید.', 'bad'); return; }
+  var no = Number($('eBox').value), q = num($('eQty').value), pkI = num($('ePk').value), perI = num($('ePer').value);
   if (!no) { toast('کیس / کارتن را انتخاب کنید.', 'bad'); $('eBox').focus(); return; }
-  if (!(pk >= 1) || Math.floor(pk) !== pk) { toast('تعداد بسته را درست وارد کنید.', 'bad'); $('ePk').focus(); return; }
-  if (MAN() ? !(per > 0) : !(per >= 1)) { toast(MAN() ? 'مقدار را درست وارد کنید.' : 'تعداد در بسته را درست وارد کنید.', 'bad'); $('ePer').focus(); return; }
+  if (q === null || q < 0) { toast('تعداد شمارش را وارد کنید. اگر قطعه‌ای نیست، عدد 0 را بزنید.', 'bad'); $('eQty').focus(); return; }
   var s = MS(), r = rows().filter(function (y) { return y.no === no; })[0];
-  if (MAN() && r.unit === 'عدد' && Math.floor(per) !== per) { toast('واحد این قطعه «عدد» است؛ اعشار قبول نیست.', 'bad'); $('ePer').focus(); return; }
-  if (s.rows[no] && editNo !== no && !confirm((boxLbl(r) || r.pn) + ' قبلاً ثبت شده. با مقدار جدید جایگزین شود؟')) return;
-  if (editNo != null && editNo !== no) { delete s.rows[editNo]; enqueue({ type: 'ROW', rowNo: editNo, del: true }); }
-  var note = $('eNote').value.trim();
-  s.rows[no] = { pk: pk, per: per, note: note, method: entryMethod };
-  delete s.recount[no];
-  s.rows[no].q = enqueue({ type: 'ROW', rowNo: no, pk: pk, per: per, note: note, method: entryMethod });
-  save();
-  toast('ثبت شد: ' + r.pn + (MAN() ? ' — ' + per + ' ' + r.unit : ' — ' + boxLbl(r) + ' — ' + pk + ' × ' + per + ' = ' + r3(pk * per)), 'ok');
+  if (MAN() && r.unit === 'عدد' && Math.floor(q) !== q) { toast('واحد این قطعه «عدد» است؛ اعشار قبول نیست.', 'bad'); $('eQty').focus(); return; }
+  if (s.rows[no] && s.retry !== no && !confirm((boxLbl(r) || r.pn) + ' قبلاً ثبت شده. با مقدار جدید جایگزین شود؟')) return;
+  var usePk = pkI != null && perI != null && pkI >= 1 && r3(pkI * perI) === r3(q);
+  var res = saveCount(no, usePk ? pkI : 1, usePk ? perI : q, $('eNote').value.trim(), entryMethod);
+  if (res === 'retry') {
+    $('eQty').value = ''; $('ePk').value = ''; $('ePer').value = ''; renderGrid();
+    toast('با لیست نمی‌خواند. این کارتن را دوباره بشمارید و عدد را وارد کنید.', 'bad'); $('eQty').focus(); return;
+  }
+  toast('ثبت شد: ' + r.pn + (boxLbl(r) ? ' — ' + boxLbl(r) : '') + ' — ' + r3(q), 'ok');
   resetEntry(); renderAll(); $('ePart').focus();
 });
-function startEdit(no) {
-  var r = rows().filter(function (y) { return y.no === no; })[0], x = MS().rows[no];
-  resetEntry(); editNo = no; pickPart(r.pn, x.method);
-  $('eBox').value = String(no); $('ePk').value = x.pk; $('ePer').value = x.per; $('eNote').value = x.note || ''; updTot();
-  $('eAdd').textContent = 'ذخیره‌ی ویرایش'; $('eCancel').classList.remove('hidden');
-  renderGrid(); $('entryPanel').scrollIntoView({ block: 'center' });
-}
+$('checkBtn').addEventListener('click', function () {
+  var s = MS(), empty = rows().filter(function (r) { return !s.rows[r.no]; });
+  if (empty.length) { toast(empty.length + ' ردیف شمارش ندارد. اگر قطعه‌ای نیست، عدد 0 را وارد کنید.', 'bad'); var f = $('cnt_' + empty[0].no); if (f) f.focus(); return; }
+  if (s.retry) { toast('شمارش دوباره‌ی ردیف مشخص‌شده را وارد کنید.', 'bad'); var g = $('cnt_' + s.retry); if (g) g.focus(); return; }
+  var n = shortRows().length;
+  if (!confirm('جدول شمارش اول قفل می‌شود' + (n ? ' و ' + n + ' ردیف برای شمارش دوم می‌آید.' : '.') + ' ادامه می‌دهید؟')) return;
+  s.cntChecked = true; if (!n) s.rcFinal = true;
+  resetEntry(); save(); renderAll();
+});
 /* QR (قابلیت جانبی) */
 $('qrShot').addEventListener('change', function (e) {
   var f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
@@ -860,29 +881,7 @@ $('qrShot').addEventListener('change', function (e) {
   img.src = url;
 });
 
-/* ---------------- مقایسه، کسری، سند خروج، بستن ---------------- */
-function renderCompare() {
-  var rev = revealed(); $('cmpSection').classList.toggle('hidden', !rev); if (!rev) return;
-  var s = MS(), n = { ok: 0, short: 0, over: 0, none: 0 }, dis = closed() ? ' disabled' : '';
-  $('cmpBody').innerHTML = rows().map(function (r) {
-    var c1 = counted(r.no), rc = s.rcDone && c1 != null && c1 !== r.total && (s.recount[r.no] || {}).c2 != null;
-    var c = rc ? finalOf(r) : c1, got = c == null ? 0 : c, rem = r3(r.total - got), st, cls = '';
-    if (c == null) { st = 'جمع نشده'; n.none++; cls = 'pos'; }
-    else if (rem === 0) { st = '✔ کامل'; n.ok++; }
-    else if (rem > 0) { st = 'کسری'; n.short++; cls = 'pos'; }
-    else { st = 'اضافه'; n.over++; cls = 'neg'; }
-    var x = s.rows[r.no] || {};
-    return '<tr><td>' + r.no + '</td><td class="code">' + esc(r.pn) + '</td><td class="code">' + boxCell(r) + '</td><td class="desc">' + esc(r.desc) + '</td>' +
-      '<td>' + r.total + '</td><td>' + (c == null ? '—' : '<b>' + c + '</b>' + (rc ? '<div class="note">شمارش اول: ' + c1 + '</div>' : '')) + '</td><td class="rem ' + cls + '">' + rem + '</td><td>' + st + '</td>' +
-      '<td class="desc">' + (rem < 0 ? esc(overText(r.no)) : '') + '</td></tr>';
-  }).join('');
-  $('cmpSummary').innerHTML = '<div class="msg ' + (n.short + n.none + n.over ? 'warn' : 'ok') + '">کامل: ' + n.ok + ' — کسری: ' + n.short + ' — جمع نشده: ' + n.none + ' — اضافه: ' + n.over + '</div>';
-}
-// متن علت/تکلیف اضافه‌ی یک ردیف (برای جدول مقایسه)
-function overText(no) {
-  var x = MS().recount[no] || {}, a = OVER_ACTS.filter(function (o) { return o[0] === x.oa; })[0];
-  return x.or ? x.or + (x.on ? ' — ' + x.on : '') + (a ? ' — ' + a[1] : '') : 'در «کنترل کسری و اضافه» پایین ثبت شود';
-}
+/* ---------------- کسری، سند خروج، بستن ---------------- */
 // ردیف‌هایی که کنترل لازم دارند: کسری (یا جمع نشده) و اضافه
 function shortRows() { return rows().filter(function (r) { var c = counted(r.no); return c == null || c !== r.total; }); }
 // مقدار نهایی یک ردیف کسری = آخرین شمارش ثبت‌شده (سوم، وگرنه دوم، وگرنه اول) + تحویل تکمیلی
@@ -904,25 +903,28 @@ function rowNeeds(r) {
   return e;
 }
 function renderShort() {
-  var show = revealed() && shortRows().length > 0;
+  var s = MS(), list = shortRows(), show = !!s.cntChecked && list.length > 0;
   $('shortSection').classList.toggle('hidden', !show); if (!show) return;
-  var s = MS(), lockRc = closed() || !!s.rcDone, dis = lockRc ? ' disabled' : '';
-  $('custRep').value = s.custRep || ''; $('custRep').disabled = lockRc;
-  $('rcBtn').parentNode.classList.toggle('hidden', closed() || !!s.times.EXIT_DOC);
-  $('rcBtn').textContent = s.rcDone ? '✏️ ویرایش شمارش دوم' : 'ثبت شمارش دوم و مقدار نهایی';
-  $('rcBtn').className = s.rcDone ? 'sec' : '';
-  $('rcMsg').innerHTML = s.rcDone ? '<div class="msg ok">✔ شمارش دوم ثبت شد' + (s.rcAt ? ' (' + esc(s.rcAt) + ')' : '') + '. مقدار نهایی جایگزین شمارش اول شد و در «مقایسه» بالا دیده می‌شود.' +
-    (unresolvedRows().length ? ' — ' + unresolvedRows().length + ' ردیف هنوز کسری یا اضافه دارد و برای تأیید سرپرست می‌رود.' : ' — همه‌ی مغایرت‌ها برطرف شد.') + '</div>' : '';
-  $('custRep').onchange = function () { s.custRep = this.value.trim(); save(); renderAll(); };
-  $('shortBody').innerHTML = shortRows().map(function (r) {
+  var rev = revealed(), lockC = !!s.rcDone || closed(), lockF = !!s.rcFinal || closed();
+  $('custRep').value = s.custRep || ''; $('custRep').disabled = lockC;
+  $('custRep').onchange = function () { s.custRep = this.value.trim(); save(); };
+  $('shortTitle').textContent = rev ? 'شمارش اول، دوم و سوم و نتیجه' : 'شمارش دوم و سوم';
+  $('rcBtn').parentNode.classList.toggle('hidden', lockF);
+  $('rcBtn').textContent = s.rcDone ? 'تأیید نتیجه و نهایی کردن شمارش' : 'ثبت شمارش و نمایش نتیجه';
+  $('rcMsg').innerHTML = lockF ? '<div class="msg ok">✔ شمارش نهایی شد. تغییر بعدی فقط از «اصلاح اسناد» انجام می‌شود.</div>' : '';
+  $('shortHead').innerHTML = '<tr><th>ردیف</th><th>شماره فنی</th><th>کیس / کارتن</th><th>شرح فارسی</th><th>شمارش اول</th><th>شمارش دوم</th><th>شمارش سوم</th>' +
+    (rev ? '<th>تحویل تکمیلی (+)</th><th>تعداد لیست</th><th>مقدار نهایی / کسری / اضافه</th><th>علت (و تکلیف اضافه)</th>' : '') + '</tr>';
+  var md = MAN() ? 'decimal' : 'numeric', dis = lockF ? ' disabled' : '';
+  $('shortBody').innerHTML = list.map(function (r) {
     var c1 = counted(r.no) || 0, x = s.recount[r.no] || {}, need3 = x.c2 != null && x.c2 !== c1;
-    return '<tr><td>' + r.no + '</td><td class="code">' + esc(r.pn) + '</td><td class="code">' + boxCell(r) + '</td>' +
-      '<td>' + r.total + '</td><td>' + c1 + '</td><td class="rem ' + (c1 > r.total ? 'neg' : 'pos') + '">' + r3(r.total - c1) + '</td>' +
-      '<td><input type="number" step="any" inputmode="' + (MAN() ? 'decimal' : 'numeric') + '" data-c2="' + r.no + '" value="' + (x.c2 == null ? '' : x.c2) + '"' + dis + '></td>' +
-      '<td>' + (need3 ? '<input type="number" step="any" inputmode="' + (MAN() ? 'decimal' : 'numeric') + '" data-c3="' + r.no + '" value="' + (x.c3 == null ? '' : x.c3) + '"' + dis + '>' : '—') + '</td>' +
-      '<td>' + ((x.c3 != null ? x.c3 : (x.c2 != null ? x.c2 : c1)) >= r.total && !(x.sp > 0) ? '—' : '<input type="number" step="any" min="0" inputmode="' + (MAN() ? 'decimal' : 'numeric') + '" data-sp="' + r.no + '" value="' + (x.sp ? x.sp : '') + '" placeholder="0"' + dis + '>') + '</td>' +
-      (function () { var f = finalOf(r), rem = r3(r.total - f); return '<td>' + f + ' — ' + (rem > 0 ? '<span class="rem pos">کسری ' + rem + '</span>' : rem < 0 ? '<span class="rem neg">اضافه ' + (-rem) + '</span>' : '<span style="color:#3f8f6b;font-weight:bold">✔ برطرف شد</span>') + '</td>'; })() +
-      '<td>' + (finalOf(r) === r.total ? '—' : finalOf(r) < r.total
+    var h = '<tr><td>' + r.no + '</td><td class="code">' + esc(r.pn) + '</td><td class="code">' + boxCell(r) + '</td><td class="desc">' + esc(r.desc) + '</td><td>' + c1 + '</td>';
+    if (!rev) return h + '<td><input type="number" step="any" inputmode="' + md + '" data-c2="' + r.no + '" value="' + (x.c2 == null ? '' : x.c2) + '"></td>' +
+      '<td>' + (need3 ? '<input type="number" step="any" inputmode="' + md + '" data-c3="' + r.no + '" value="' + (x.c3 == null ? '' : x.c3) + '">' : '—') + '</td></tr>';
+    var f = finalOf(r), rem = r3(r.total - f), last = x.c3 != null ? x.c3 : (x.c2 != null ? x.c2 : c1);
+    return h + '<td>' + (x.c2 == null ? '—' : x.c2) + '</td><td>' + (x.c3 == null ? '—' : x.c3) + '</td>' +
+      '<td>' + (last >= r.total && !(x.sp > 0) ? '—' : '<input type="number" step="any" min="0" inputmode="' + md + '" data-sp="' + r.no + '" value="' + (x.sp ? x.sp : '') + '" placeholder="0"' + dis + '>') + '</td><td><b>' + r.total + '</b></td>' +
+      '<td>' + f + ' — ' + (rem > 0 ? '<span class="rem pos">کسری ' + rem + '</span>' : rem < 0 ? '<span class="rem neg">اضافه ' + (-rem) + '</span>' : '<span style="color:#3f8f6b;font-weight:bold">✔ برابر لیست</span>') + '</td>' +
+      '<td>' + (f === r.total ? '—' : f < r.total
         ? '<select data-rs="' + r.no + '" style="min-width:150px"' + dis + '><option value="">علت کسری…</option>' +
           reasonsOf_('short').map(function (t) { return '<option' + (x.reason === t ? ' selected' : '') + '>' + esc(t) + '</option>'; }).join('') + '</select>'
         : '<select data-or="' + r.no + '" style="min-width:170px"' + dis + '><option value="">علت اضافه…</option>' +
@@ -932,48 +934,48 @@ function renderShort() {
           '<input type="text" data-on="' + r.no + '" value="' + esc(x.on || '') + '" placeholder="توضیح' + (/^سایر/.test(x.or || '') ? ' (اجباری)' : '') + '" style="margin-top:3px"' + dis + '>') + '</td></tr>';
   }).join('');
   function rc(no) { return s.recount[no] || (s.recount[no] = {}); }
-  document.querySelectorAll('[data-c2]').forEach(function (el) { el.addEventListener('change', function () { var o = rc(el.getAttribute('data-c2')); o.c2 = num(el.value); delete o.c3; save(); renderAll(); }); });
-  document.querySelectorAll('[data-c3]').forEach(function (el) { el.addEventListener('change', function () { rc(el.getAttribute('data-c3')).c3 = num(el.value); save(); renderAll(); }); });
-  document.querySelectorAll('[data-rs]').forEach(function (el) { el.addEventListener('change', function () { rc(el.getAttribute('data-rs')).reason = el.value; save(); renderAll(); }); });
-  document.querySelectorAll('[data-or]').forEach(function (el) { el.addEventListener('change', function () { rc(el.getAttribute('data-or')).or = el.value; save(); renderAll(); }); });
-  document.querySelectorAll('[data-oa]').forEach(function (el) { el.addEventListener('change', function () { rc(el.getAttribute('data-oa')).oa = el.value; save(); renderAll(); }); });
-  document.querySelectorAll('[data-on]').forEach(function (el) { el.addEventListener('change', function () { rc(el.getAttribute('data-on')).on = el.value.trim(); save(); renderAll(); }); });
-  document.querySelectorAll('[data-sp]').forEach(function (el) { el.addEventListener('change', function () { var v = num(el.value); rc(el.getAttribute('data-sp')).sp = v > 0 ? v : 0; save(); renderAll(); }); });
+  document.querySelectorAll('[data-c2]').forEach(function (el) { el.addEventListener('change', function () { var o = rc(el.getAttribute('data-c2')); o.c2 = num(el.value); delete o.c3; save(); renderShort(); }); });
+  document.querySelectorAll('[data-c3]').forEach(function (el) { el.addEventListener('change', function () { rc(el.getAttribute('data-c3')).c3 = num(el.value); save(); }); });
+  document.querySelectorAll('[data-rs]').forEach(function (el) { el.addEventListener('change', function () { rc(el.getAttribute('data-rs')).reason = el.value; save(); }); });
+  document.querySelectorAll('[data-or]').forEach(function (el) { el.addEventListener('change', function () { rc(el.getAttribute('data-or')).or = el.value; save(); renderShort(); }); });
+  document.querySelectorAll('[data-oa]').forEach(function (el) { el.addEventListener('change', function () { rc(el.getAttribute('data-oa')).oa = el.value; save(); }); });
+  document.querySelectorAll('[data-on]').forEach(function (el) { el.addEventListener('change', function () { rc(el.getAttribute('data-on')).on = el.value.trim(); save(); }); });
+  document.querySelectorAll('[data-sp]').forEach(function (el) { el.addEventListener('change', function () { var v = num(el.value); rc(el.getAttribute('data-sp')).sp = v > 0 ? v : 0; save(); renderShort(); }); });
 }
-// ثبت شمارش دوم: کنترل کامل، قفل ردیف‌ها و ارسال مقدار نهایی به سرور (جایگزین شمارش اول)
+function recountPayload_() {
+  var s = MS(), out = {};
+  shortRows().forEach(function (r) { var x = s.recount[r.no] || {}; out[r.no] = { c2: x.c2, c3: x.c3 == null ? null : x.c3, sp: x.sp || 0, or: x.or || '', oa: x.oa || '', on: x.on || '' }; });
+  return out;
+}
+// مرحله‌ی اول: ثبت شمارش دوم/سوم بدون دیدن تعداد لیست. مرحله‌ی دوم: علت و تکلیف، و نهایی شدن شمارش
 $('rcBtn').addEventListener('click', function () {
-  var s = MS();
-  if (closed() || s.times.EXIT_DOC) return;
-  if (s.rcDone) { s.rcDone = false; save(); renderAll(); toast('شمارش دوم برای ویرایش باز شد؛ بعد از اصلاح دوباره «ثبت» بزنید.', 'warn'); return; }
-  var errs = [];
-  if (!s.custRep) errs.push('نام نماینده‌ی انبار مشتری');
-  shortRows().forEach(function (r) {
-    var c1 = counted(r.no) || 0, x = s.recount[r.no] || {};
-    if (x.c2 == null) errs.push('شمارش دوم ردیف ' + r.no + ' (' + r.pn + ')');
-    else if (x.c2 !== c1 && x.c3 == null) errs.push('شمارش سوم ردیف ' + r.no + ' (شمارش دوم با اول فرق دارد)');
-    errs = errs.concat(rowNeeds(r));
-  });
+  var s = MS(), errs = [];
+  if (closed() || s.rcFinal) return;
+  if (!s.rcDone) {
+    if (!s.custRep) errs.push('نام نماینده‌ی انبار مشتری');
+    shortRows().forEach(function (r) {
+      var c1 = counted(r.no) || 0, x = s.recount[r.no] || {};
+      if (x.c2 == null) errs.push('شمارش دوم ردیف ' + r.no + ' (' + r.pn + ')');
+      else if (x.c2 !== c1 && x.c3 == null) errs.push('شمارش سوم ردیف ' + r.no + ' (شمارش دوم با اول فرق دارد)');
+    });
+    if (errs.length) { $('rcMsg').innerHTML = '<div class="msg bad">کامل شود:<br>• ' + errs.map(esc).join('<br>• ') + '</div>'; return; }
+    if (!confirm('بعد از ثبت، شمارش دوم و سوم قابل تغییر نیست و تعداد لیست نمایش داده می‌شود. ثبت شود؟')) return;
+    s.rcDone = true; s.rcAt = fmtTime(nowSrv());
+    enqueue({ type: 'RECOUNT', rows: recountPayload_(), customerRep: s.custRep });
+    save(); renderAll(); toast('شمارش دوم و سوم ثبت شد.', 'ok');
+    return;
+  }
+  shortRows().forEach(function (r) { errs = errs.concat(rowNeeds(r)); });
   if (errs.length) { $('rcMsg').innerHTML = '<div class="msg bad">کامل شود:<br>• ' + errs.map(esc).join('<br>• ') + '</div>'; return; }
-  var list = shortRows().map(function (r) { return r.pn + ': ' + (counted(r.no) || 0) + ' ← ' + finalOf(r); }).join('\n');
-  if (!confirm('مقدار نهایی این ردیف‌ها جایگزین شمارش اول شود؟\n' + list)) return;
-  var rows = {};
-  shortRows().forEach(function (r) { var x = s.recount[r.no] || {}; rows[r.no] = { c2: x.c2, c3: x.c3 == null ? null : x.c3, sp: x.sp || 0, or: x.or || '', oa: x.oa || '', on: x.on || '' }; });
-  s.rcDone = true; s.rcAt = fmtTime(nowSrv());
-  enqueue({ type: 'RECOUNT', rows: rows, customerRep: s.custRep });
-  save(); renderAll();
-  toast('شمارش دوم ثبت شد.', 'ok');
+  if (!confirm('نتیجه‌ی شمارش نهایی شود؟ بعد از آن از این فرم قابل تغییر نیست.')) return;
+  s.rcFinal = true;
+  enqueue({ type: 'RECOUNT', rows: recountPayload_(), customerRep: s.custRep });
+  save(); renderAll(); toast('شمارش نهایی شد.', 'ok');
 });
 function missing() {
   var s = MS(), errs = [];
-  if (!s.times.COLLECTION_END) errs.push('ثبت زمان «پایان جمع‌آوری»');
-  if (s.times.COLLECTION_END && shortRows().length && !s.custRep) errs.push('نام نماینده‌ی انبار مشتری');
-  if (s.times.COLLECTION_END && shortRows().length && !s.rcDone) errs.push('زدن دکمه‌ی «ثبت شمارش دوم و مقدار نهایی»');
-  shortRows().forEach(function (r) {
-    var c1 = counted(r.no) || 0, x = s.recount[r.no] || {};
-    if (x.c2 == null) errs.push('شمارش دوم ردیف ' + r.no);
-    else if (x.c2 !== c1 && x.c3 == null) errs.push('شمارش سوم ردیف ' + r.no);
-    errs = errs.concat(rowNeeds(r));
-  });
+  if (!s.cntChecked) errs.push('زدن دکمه‌ی «بررسی شمارش»');
+  else if (shortRows().length && !s.rcFinal) errs.push('نهایی کردن شمارش دوم و سوم');
   return errs;
 }
 /* ---------------- سند خروج: یک سند برای کل ماموریت، یا چند سند به تفکیک کیس/کارتن ---------------- */
@@ -1053,24 +1055,25 @@ function exitReady() {
 }
 function renderExit() {
   var s = MS(), n = unresolvedRows().length, dis = closed() || !!s.times.EXIT_DOC;
-  $('exitOkText').textContent = 'سند خروج دقیقاً با جدول جمع‌آوری بالا' + (n && revealed() ? '، همراه با ' + n + ' ردیف کسری/اضافه،' : '') + ' صادر شده است.';
+  $('exitOkText').textContent = 'سند خروج دقیقاً با جدول جمع‌آوری بالا' + (n && countFinal() ? '، همراه با ' + n + ' ردیف کسری/اضافه،' : '') + ' صادر شده است.';
   $('exitNo').disabled = dis; $('exitOk').disabled = dis;
   renderExitMulti();
-  $('closeBtn').disabled = closed() || !revealed();
-  $('closeBtn').textContent = closed() ? (s.status === 'CLOSED' ? '✓ ثبت نهایی شد' : '✓ ثبت نهایی شد — کسری/اضافه در انتظار تأیید سرپرست') : 'ثبت نهایی (بستن ماموریت) — با ثبت زمان «دریافت سند خروج»';
+  $('closeBtn').disabled = closed() || !countFinal();
+  $('closeBtn').textContent = closed() ? (s.status === 'CLOSED' ? '✓ ثبت نهایی شد' : '✓ ثبت نهایی شد — کسری/اضافه در انتظار تأیید سرپرست') : 'ثبت نهایی (بستن ماموریت) — با ثبت زمان «پایان جمع‌آوری»';
 }
 $('exitNo').addEventListener('change', function () { MS().exitNo = this.value.trim(); save(); renderTimes(); });
 $('exitOk').addEventListener('change', function () { MS().exitOk = this.checked; save(); renderTimes(); });
 
-// «ثبت نهایی» همان ثبت زمان «دریافت سند خروج» است؛ بعد از ثبت آن زمان، ماموریت بسته می‌شود
+// «ثبت نهایی» همان ثبت زمان «پایان جمع‌آوری» است؛ بعد از ثبت آن زمان، ماموریت بسته می‌شود
 $('closeBtn').addEventListener('click', function () {
-  var errs = missing(), r = exitReady();
+  var s = MS(), errs = missing(), r = exitReady();
   if (!r.ok && !errs.length) errs.push(r.msg);
+  if (!errs.length && !s.times.EXIT_DOC) errs.push('ثبت زمان «دریافت سند خروج»');
   if (errs.length) { $('finalMsg').innerHTML = '<div class="msg bad">برای ثبت نهایی این موارد کامل شود:<br>• ' + errs.map(esc).join('<br>• ') + '</div>'; toast('هنوز قابل ثبت نهایی نیست.', 'bad'); return; }
-  if (!confirm('ماموریت ثبت نهایی شود؟ بعد از آن جدول، کسری‌ها و اضافه‌ها قابل تغییر نیست.')) return;
   $('finalMsg').innerHTML = '';
-  var idx = TIMES.map(function (t) { return t.key; }).indexOf('EXIT_DOC');
-  if (MS().times.EXIT_DOC) doClose(); else recordTime(idx, document.querySelector('[data-t="' + idx + '"]'));
+  if (s.times.COLLECTION_END) { doClose(); return; }
+  var idx = TIMES.map(function (t) { return t.key; }).indexOf('COLLECTION_END');
+  recordTime(idx, document.querySelector('[data-t="' + idx + '"]'));
 });
 // ثبت نهایی فقط آنلاین: اول همه‌ی ثبت‌های صفِ این ماموریت به سرور می‌رسد، بعد بستن ماموریت مستقیم ارسال و تأیید می‌شود.
 // تا جواب «ثبت شد» از سرور نیاید، ماموریت روی گوشی باز می‌ماند (در صف گذاشته نمی‌شود).
