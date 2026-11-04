@@ -241,7 +241,6 @@
     <div class="form-row">
       <div class="form-group"><label>تعداد سند خروج</label><select id="exitMode"><option value="one">یک سند برای کل ماموریت</option><option value="multi">چند سند خروج (به تفکیک کارتن)</option></select></div>
       <div class="form-group" id="exitOneBox"><label>شماره سند خروج</label><input type="text" id="exitNo" class="code"></div>
-      <div class="form-group"><label>دریافت سند خروج</label><div class="time-box" id="tb_EXIT_DOC"></div></div>
     </div>
     <div id="exitMulti" class="hidden">
       <div class="form-row">
@@ -258,6 +257,9 @@
       <p class="note">هر کیس/کارتنی که چیزی از آن جمع‌آوری شده باید سند خروج داشته باشد.</p>
     </div>
     <label class="chk"><input type="checkbox" id="exitOk"><span id="exitOkText">سند خروج دقیقاً با جدول جمع‌آوری بالا صادر شده است.</span></label>
+    <div class="form-row">
+      <div class="form-group"><label>دریافت سند خروج</label><div class="time-box" id="tb_EXIT_DOC"></div></div>
+    </div>
 
     <h3>زمان‌ها — پایان جمع‌آوری، خروج و انتقال</h3>
     <div class="form-row" id="times3"></div>
@@ -304,10 +306,10 @@ var TIMES = [
   { key: 'START',           label: 'شروع ماموریت',            box: 'times1', place: 'home' },
   { key: 'CUST_ARRIVAL',    label: 'رسیدن به انبار مشتری',    box: 'times1', place: 'site' },
   { key: 'PREP_START',      label: 'شروع آماده‌سازی و شمارش', box: 'times1', place: 'site' },
-  { key: 'INSPECTION',      label: 'اعلام بازرسی',             box: 'times2', place: 'site' },
   { key: 'WAREHOUSE_EMAIL', label: 'ارسال ایمیل از انبار',     box: 'times2', place: 'site' },
   { key: 'EXIT_DOC',        label: 'دریافت سند خروج',          box: 'exit',   place: 'site' },
   { key: 'COLLECTION_END',  label: 'پایان جمع‌آوری',           box: 'times3', place: 'site' },
+  { key: 'INSPECTION',      label: 'اعلام بازرسی',             box: 'times3', place: 'site' },
   { key: 'SECURITY_CHECK',  label: 'کنترل انتظامات',           box: 'times3', place: 'site' },
   { key: 'SITE_EXIT',       label: 'خروج از سایت مشتری',       box: 'times3', place: 'site' },
   { key: 'KPT_ARRIVAL',     label: 'ساعت ورود به قوا',         box: 'times3', place: 'home' }
@@ -604,7 +606,7 @@ function canRecord(i) {
   var s = MS(), t = TIMES[i];
   if (s.times[t.key]) return false;
   if (i > 0 && !s.times[TIMES[i - 1].key]) return false;
-  if (t.key === 'INSPECTION' && !countFinal()) return false;
+  if (t.key === 'WAREHOUSE_EMAIL' && !countFinal()) return false;
   if (t.key === 'EXIT_DOC') return exitReady().ok;
   return true;
 }
